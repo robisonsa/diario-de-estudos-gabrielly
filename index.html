@@ -191,7 +191,7 @@
     <script type="module">
         // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, getDoc, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- Configuração e Inicialização ---
@@ -319,10 +319,17 @@
         }
 
         function populateSelects() {
-            const selects = document.querySelectorAll('select#tarefa-disciplina, select#conteudo-disciplina, select#filtro-disciplina, select#filtro-tarefa-disciplina');
-            selects.forEach(select => {
-                const firstOptionHTML = select.querySelector('option') ? select.querySelector('option').outerHTML : '';
-                select.innerHTML = firstOptionHTML;
+            // Populates selects for adding/editing tasks and content
+            const formSelects = document.querySelectorAll('select#tarefa-disciplina, select#conteudo-disciplina');
+            formSelects.forEach(select => {
+                select.innerHTML = '';
+                disciplinas.forEach(d => select.innerHTML += `<option value="${d}">${d}</option>`);
+            });
+
+            // Populates selects for filtering
+            const filterSelects = document.querySelectorAll('select#filtro-disciplina, select#filtro-tarefa-disciplina');
+            filterSelects.forEach(select => {
+                select.innerHTML = '<option value="">Todas as Disciplinas</option>';
                 disciplinas.forEach(d => select.innerHTML += `<option value="${d}">${d}</option>`);
             });
         }
@@ -722,7 +729,15 @@
             });
             
             document.body.addEventListener('click', e => {
-                const targetId = e.target.closest('button')?.id;
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const targetId = btn.id;
+
+                if (targetId === 'close-conquista-modal') {
+                    toggleModal('conquista-unlocked-modal', false);
+                    return;
+                }
+
                 if (targetId && (targetId.startsWith('close-') || targetId.startsWith('cancel-'))) {
                     const modalId = targetId.split('-')[1] + '-modal';
                     toggleModal(modalId, false);
