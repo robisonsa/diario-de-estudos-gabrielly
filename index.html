@@ -957,9 +957,18 @@
             document.getElementById('profile-form').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const newName = document.getElementById('profile-name').value;
-                const newPhoto = document.getElementById('profile-photo').value;
+                let newPhoto = document.getElementById('profile-photo').value.trim();
 
                 if (!userId) return;
+
+                // Transforma link do Google Drive em link direto
+                if (newPhoto.includes('drive.google.com/file/d/')) {
+                    const parts = newPhoto.split('/d/');
+                    if (parts.length > 1) {
+                        const id = parts[1].split('/')[0];
+                        newPhoto = `https://lh3.googleusercontent.com/d/${id}`;
+                    }
+                }
 
                 try {
                     await setDoc(doc(db, "users", userId, "userData", "profile"), {
@@ -1005,8 +1014,8 @@
             };
 
             const collections = {
-                tarefas: (data) => { allTarefas = data; applyAndRenderTarefasFilters(); renderMeuDia(); },
-                conteudos: (data) => { allConteudos = data; applyAndRenderConteudosFilters(); renderMeuDia(); },
+                tarefas: (data) => { allTarefas = data; applyAndRenderTarefasFilters(); },
+                conteudos: (data) => { allConteudos = data; applyAndRenderConteudosFilters(); },
             };
             for(const key in collections){
                 const ref = collection(db, "users", userId, key);
