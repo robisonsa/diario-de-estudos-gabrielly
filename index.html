@@ -69,6 +69,7 @@
                     </div>
                 </div>
             </div>
+            <div id="user-id-display" class="mt-2 text-xs text-slate-400 text-right">Carregando ID de usuário...</div>
         </header>
 
         <!-- Tabs -->
@@ -924,15 +925,21 @@
 
         // --- Inicialização da Aplicação ---
         onAuthStateChanged(auth, async (user) => {
+            const userIdDisplay = document.getElementById('user-id-display');
             if (user) {
                 userId = user.uid;
+                if(userIdDisplay) userIdDisplay.textContent = `ID de Usuário: ${userId}`;
                 setupFirestoreListeners();
             } else {
                 try {
                     const cred = await signInAnonymously(auth);
                     userId = cred.user.uid;
+                    if(userIdDisplay) userIdDisplay.textContent = `ID de Usuário: ${userId}`;
                     setupFirestoreListeners();
-                } catch (error) { console.error("Authentication failed: ", error); }
+                } catch (error) { 
+                    console.error("Authentication failed: ", error);
+                    if(userIdDisplay) userIdDisplay.textContent = `Falha na autenticação. Os dados não serão salvos.`;
+                }
             }
         });
 
@@ -944,5 +951,4 @@
     </script>
 </body>
 </html>
-
 
