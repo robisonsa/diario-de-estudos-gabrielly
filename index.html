@@ -179,6 +179,7 @@
     <div id="conteudo-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
     <div id="senha-modal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4"></div>
     <div id="metas-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
+    <div id="profile-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
     <div id="conquista-unlocked-modal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50"></div>
 
     <!-- Pomodoro Timer -->
@@ -219,7 +220,7 @@
 
         let app, auth, db, userId;
         let unsubscribes = [];
-        let allTarefas = [], allConteudos = [], userStats = {}, userGoals = {}, horarioData = {};
+        let allTarefas = [], allConteudos = [], userStats = {}, userGoals = {}, horarioData = {}, userProfile = {};
         
         try {
             app = initializeApp(firebaseConfig);
@@ -273,7 +274,7 @@
         function renderAllModals() {
             document.getElementById('tarefa-modal').innerHTML = `
                 <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-lg relative animate-fade-in">
-                    <button id="close-tarefa-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+                    <button type="button" id="close-tarefa-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
                     <h2 id="tarefa-modal-title" class="text-2xl font-bold mb-6 text-blue-600"></h2>
                     <form id="tarefa-form" class="space-y-4">
                         <input type="hidden" id="tarefa-id">
@@ -286,7 +287,7 @@
                 </div>`;
             document.getElementById('conteudo-modal').innerHTML = `
                 <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-lg relative">
-                    <button id="close-conteudo-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+                    <button type="button" id="close-conteudo-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
                     <h2 id="conteudo-modal-title" class="text-2xl font-bold mb-6 text-green-600"></h2>
                     <form id="conteudo-form" class="space-y-4">
                         <input type="hidden" id="conteudo-id">
@@ -312,6 +313,25 @@
                         <div><label for="meta-tarefas" class="block">Nº de tarefas a completar</label><input type="number" id="meta-tarefas" min="1" class="w-full border-slate-300 rounded-lg" required></div>
                         <div><label for="meta-revisoes" class="block">Nº de revisões a fazer</label><input type="number" id="meta-revisoes" min="1" class="w-full border-slate-300 rounded-lg" required></div>
                         <div class="mt-6 flex justify-end space-x-3"><button type="button" id="cancel-metas-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button><button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Salvar Metas</button></div>
+                    </form>
+                </div>`;
+            document.getElementById('profile-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-md relative">
+                    <h2 class="text-xl font-bold mb-4">Editar Perfil</h2>
+                    <form id="profile-form" class="space-y-4">
+                        <div>
+                            <label for="profile-name" class="block font-medium text-slate-700">Nome de Exibição</label>
+                            <input type="text" id="profile-name" class="w-full border-slate-300 rounded-lg mt-1" required>
+                        </div>
+                        <div>
+                            <label for="profile-photo" class="block font-medium text-slate-700">URL da Foto</label>
+                            <input type="url" id="profile-photo" class="w-full border-slate-300 rounded-lg mt-1" placeholder="https://exemplo.com/sua-foto.jpg">
+                            <p class="text-xs text-slate-500 mt-1">Cole o link de uma imagem da internet.</p>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" id="cancel-profile-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button>
+                            <button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Salvar</button>
+                        </div>
                     </form>
                 </div>`;
              document.getElementById('conquista-unlocked-modal').innerHTML = `
@@ -392,7 +412,43 @@
 
 
         // --- Funções de Renderização Principal ---
+        function renderUserInfo(user) {
+            if (!user) {
+                userInfo.innerHTML = '';
+                return;
+            }
+            
+            const displayName = userProfile.displayName || user.displayName || user.email || "Usuário";
+            const photoURL = userProfile.photoURL || user.photoURL;
+            
+            let profileImageHtml;
+            if (photoURL) {
+                profileImageHtml = `<img src="${photoURL}" alt="Foto do perfil" class="w-10 h-10 rounded-full object-cover">`;
+            } else {
+                const initial = displayName.charAt(0).toUpperCase();
+                profileImageHtml = `
+                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                        ${initial}
+                    </div>
+                `;
+            }
+
+            userInfo.innerHTML = `
+                ${profileImageHtml}
+                <div class="text-sm">
+                    <p class="font-bold text-slate-700">${displayName}</p>
+                    <div class="flex items-center gap-3">
+                         <button id="logout-btn" class="text-red-500 hover:underline">Sair</button>
+                         <button id="edit-profile-btn" class="text-blue-500 hover:underline">Editar</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            document.getElementById('edit-profile-btn').addEventListener('click', openProfileModal);
+        }
+
         function renderAll() {
+            renderUserInfo(auth.currentUser);
             renderMeuDia();
             applyAndRenderTarefasFilters();
             applyAndRenderConteudosFilters();
@@ -713,6 +769,14 @@
         }
 
         // --- Event Listeners ---
+        function openProfileModal() {
+            const currentName = userProfile.displayName || auth.currentUser.displayName || auth.currentUser.email || "";
+            const currentPhoto = userProfile.photoURL || auth.currentUser.photoURL || "";
+            document.getElementById('profile-name').value = currentName;
+            document.getElementById('profile-photo').value = currentPhoto;
+            toggleModal('profile-modal', true);
+        }
+
         function attachAllEventListeners() {
             document.getElementById('google-login-btn').addEventListener('click', handleGoogleLogin);
 
@@ -890,6 +954,24 @@
                 await setDoc(doc(db, "users", userId, "userData", "horario"), newHorarioData);
             });
             
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newName = document.getElementById('profile-name').value;
+                const newPhoto = document.getElementById('profile-photo').value;
+
+                if (!userId) return;
+
+                try {
+                    await setDoc(doc(db, "users", userId, "userData", "profile"), {
+                        displayName: newName,
+                        photoURL: newPhoto
+                    }, { merge: true });
+                    toggleModal('profile-modal', false);
+                } catch (error) {
+                    console.error("Erro ao salvar perfil:", error);
+                }
+            });
+
             document.getElementById('pomodoro-toggle-btn').addEventListener('click', () => pomodoroTimer.classList.add('expanded'));
             document.getElementById('pomodoro-minimize-btn').addEventListener('click', () => pomodoroTimer.classList.remove('expanded'));
             pomodoroStartPause().addEventListener('click', startPausePomodoro);
@@ -937,17 +1019,26 @@
             
             const defaultDocs = {
                 'stats': { pontos: 0, pontosMes: 0, ultimoMes: "", tarefasConcluidas: 0, revisoesFeitas: 0, pomodorosCompletos: 0, tarefasHoje: 0, tarefasSemana: 0, revisoesSemana: 0, conquistas: {} },
-                'goals': { tarefas: 10, revisoes: 10 }, 'horario': {}
+                'goals': { tarefas: 10, revisoes: 10 },
+                'horario': {},
+                'profile': {}
             };
             for (const docId in defaultDocs) {
                 const docRef = doc(db, "users", userId, "userData", docId);
                 const unsub = onSnapshot(docRef, async (docSnap) => {
-                    if (!docSnap.exists()) await setDoc(docRef, defaultDocs[docId]);
-                    else {
-                        if (docId === 'stats') userStats = docSnap.data();
-                        if (docId === 'goals') userGoals = docSnap.data();
-                        if (docId === 'horario') horarioData = docSnap.data();
+                    let data;
+                    if (!docSnap.exists()) {
+                        await setDoc(docRef, defaultDocs[docId]);
+                        data = defaultDocs[docId];
+                    } else {
+                        data = docSnap.data();
                     }
+                    
+                    if (docId === 'stats') userStats = data;
+                    if (docId === 'goals') userGoals = data;
+                    if (docId === 'horario') horarioData = data;
+                    if (docId === 'profile') userProfile = data;
+                    
                     renderAll();
                 });
                 unsubscribes.push(unsub);
@@ -960,31 +1051,6 @@
                 userId = user.uid;
                 loginContainer.classList.add('hidden');
                 appContainer.classList.remove('hidden');
-
-                const displayName = user.displayName || user.email || "Usuário";
-                const photoURL = user.photoURL;
-                
-                let profileImageHtml;
-                if (photoURL) {
-                    profileImageHtml = `<img src="${photoURL}" alt="Foto do perfil" class="w-10 h-10 rounded-full">`;
-                } else {
-                    const initial = displayName.charAt(0).toUpperCase();
-                    profileImageHtml = `
-                        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
-                            ${initial}
-                        </div>
-                    `;
-                }
-
-                userInfo.innerHTML = `
-                    ${profileImageHtml}
-                    <div class="text-sm">
-                        <p class="font-bold text-slate-700">${displayName}</p>
-                        <button id="logout-btn" class="text-red-500 hover:underline">Sair</button>
-                    </div>
-                `;
-                document.getElementById('logout-btn').addEventListener('click', handleLogout);
-
                 setupFirestoreListeners();
             } else {
                 // Usuário está deslogado
