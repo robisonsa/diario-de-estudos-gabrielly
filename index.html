@@ -191,26 +191,19 @@
     <script type="module">
         // Importações do Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, getDoc, Timestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyDYMWo_itEipB4QzPRlcS0t9EPqffBFBS0",
-  authDomain: "diario-de-estudos-gabrielly.firebaseapp.com",
-  projectId: "diario-de-estudos-gabrielly",
-  storageBucket: "diario-de-estudos-gabrielly.firebasestorage.app",
-  messagingSenderId: "647763105939",
-  appId: "1:647763105939:web:87ff53a56f487d891f5566"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+        // --- Configuração e Inicialização ---
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDYMWo_itEipB4QzPRlcS0t9EPqffBFBS0",
+            authDomain: "diario-de-estudos-gabrielly.firebaseapp.com",
+            projectId: "diario-de-estudos-gabrielly",
+            storageBucket: "diario-de-estudos-gabrielly.appspot.com",
+            messagingSenderId: "647763105939",
+            appId: "1:647763105939:web:87ff53a56f487d891f5566"
+        };
 
         let app, auth, db, userId;
         let unsubscribes = [];
@@ -613,7 +606,7 @@ const app = initializeApp(firebaseConfig);
                 userStats.pomodorosCompletos = (userStats.pomodorosCompletos || 0) + 1;
             }
             await checkAndUnlockConquistas();
-            await setDoc(doc(db, `artifacts/${appId}/users/${userId}/userData`, 'stats'), userStats, { merge: true });
+            await setDoc(doc(db, "users", userId, "userData", "stats"), userStats, { merge: true });
         }
 
         async function checkAndUnlockConquistas() {
@@ -747,10 +740,9 @@ const app = initializeApp(firebaseConfig);
                     fontes: document.getElementById('tarefa-fontes').value,
                 };
                 try {
-                    if (id) await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tarefas`, id), data);
-                    else {
-                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/tarefas`), { ...data, concluida: false, criadoEm: new Date() });
-                    }
+                    const docRef = id ? doc(db, "users", userId, "tarefas", id) : collection(db, "users", userId, "tarefas");
+                    if (id) await updateDoc(docRef, data);
+                    else await addDoc(docRef, { ...data, concluida: false, criadoEm: new Date() });
                 } catch (error) { console.error("Erro ao salvar tarefa:", error); }
                 toggleModal('tarefa-modal', false);
             });
@@ -765,10 +757,9 @@ const app = initializeApp(firebaseConfig);
                     topicos: Array.from(document.querySelectorAll('.topic-input')).map(i => i.value.trim()).filter(Boolean),
                 };
                 try {
-                    if(id) await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/conteudos`, id), data);
-                    else {
-                        await addDoc(collection(db, `artifacts/${appId}/users/${userId}/conteudos`), { ...data, ultimaRevisao: data.dataAula, estagioRevisao: 0 });
-                    }
+                    const docRef = id ? doc(db, "users", userId, "conteudos", id) : collection(db, "users", userId, "conteudos");
+                    if(id) await updateDoc(docRef, data);
+                    else await addDoc(docRef, { ...data, ultimaRevisao: data.dataAula, estagioRevisao: 0 });
                 } catch(error){ console.error("Erro ao salvar conteudo:", error); }
                 toggleModal('conteudo-modal', false);
             });
@@ -777,9 +768,9 @@ const app = initializeApp(firebaseConfig);
                 const senha = document.getElementById('senha-input').value;
                 if (senha === SENHA_MESTRA) {
                     toggleModal('senha-modal', false);
-                    if (pendingAction === 'deleteConteudo') await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/conteudos`, pendingDocId));
+                    if (pendingAction === 'deleteConteudo') await deleteDoc(doc(db, "users", userId, "conteudos", pendingDocId));
                     else if (pendingAction === 'editConteudo') {
-                        const docSnap = await getDoc(doc(db, `artifacts/${appId}/users/${userId}/conteudos`, pendingDocId));
+                        const docSnap = await getDoc(doc(db, "users", userId, "conteudos", pendingDocId));
                         if(docSnap.exists()){
                             const c = docSnap.data();
                             document.getElementById('conteudo-id').value = pendingDocId;
@@ -799,7 +790,7 @@ const app = initializeApp(firebaseConfig);
                 e.preventDefault();
                 userGoals.tarefas = parseInt(document.getElementById('meta-tarefas').value) || 0;
                 userGoals.revisoes = parseInt(document.getElementById('meta-revisoes').value) || 0;
-                await setDoc(doc(db, `artifacts/${appId}/users/${userId}/userData`, 'goals'), userGoals);
+                await setDoc(doc(db, "users", userId, "userData", "goals"), userGoals);
                 toggleModal('metas-modal', false);
             });
 
@@ -807,14 +798,15 @@ const app = initializeApp(firebaseConfig);
                 const btn = e.target.closest('button');
                 if(!btn) return;
                 const id = btn.dataset.id;
+                const docRef = doc(db, "users", userId, "tarefas", id);
                 if(btn.classList.contains('concluir-btn')){
-                    await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/tarefas`, id), { concluida: true });
+                    await updateDoc(docRef, { concluida: true });
                     await addPoints('tarefa');
                     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 } else if(btn.classList.contains('deletar-tarefa-btn')){
-                     await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/tarefas`, id));
+                     await deleteDoc(docRef);
                 } else if(btn.classList.contains('editar-tarefa-btn')){
-                    const docSnap = await getDoc(doc(db, `artifacts/${appId}/users/${userId}/tarefas`, id));
+                    const docSnap = await getDoc(docRef);
                     if(docSnap.exists()){
                         const t = docSnap.data();
                         document.getElementById('tarefa-id').value = id;
@@ -831,6 +823,7 @@ const app = initializeApp(firebaseConfig);
                 const btn = e.target.closest('button');
                 if(!btn) return;
                 const id = btn.dataset.id;
+                const docRef = doc(db, "users", userId, "conteudos", id);
                 const handleProtected = (action, docId) => {
                     pendingAction = action; pendingDocId = docId;
                     document.getElementById('senha-form').reset();
@@ -838,11 +831,11 @@ const app = initializeApp(firebaseConfig);
                     toggleModal('senha-modal', true);
                 };
                 if(btn.classList.contains('revisar-btn')){
-                    const docSnap = await getDoc(doc(db, `artifacts/${appId}/users/${userId}/conteudos`, id));
+                    const docSnap = await getDoc(docRef);
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         const novoEstagio = data.estagioRevisao < REVISAO_INTERVALOS.length - 1 ? data.estagioRevisao + 1 : data.estagioRevisao;
-                        await updateDoc(doc(db, `artifacts/${appId}/users/${userId}/conteudos`, id), { ultimaRevisao: new Date(), estagioRevisao: novoEstagio });
+                        await updateDoc(docRef, { ultimaRevisao: new Date(), estagioRevisao: novoEstagio });
                         await addPoints('revisao');
                     }
                 } else if(btn.classList.contains('deletar-conteudo-btn')) handleProtected('deleteConteudo', id);
@@ -867,7 +860,7 @@ const app = initializeApp(firebaseConfig);
                     if (!newHorarioData[dia]) newHorarioData[dia] = {};
                     newHorarioData[dia][horario] = s.value;
                 });
-                await setDoc(doc(db, `artifacts/${appId}/users/${userId}/userData`, 'horario'), newHorarioData);
+                await setDoc(doc(db, "users", userId, "userData", "horario"), newHorarioData);
             });
             
             document.getElementById('pomodoro-toggle-btn').addEventListener('click', () => pomodoroTimer.classList.add('expanded'));
@@ -881,12 +874,13 @@ const app = initializeApp(firebaseConfig);
             if (!userId) return;
             unsubscribes.forEach(unsub => unsub());
             unsubscribes = [];
+            
             const collections = {
                 tarefas: (data) => { allTarefas = data; applyAndRenderTarefasFilters(); renderMeuDia(); },
                 conteudos: (data) => { allConteudos = data; applyAndRenderConteudosFilters(); renderMeuDia(); },
             };
             for(const key in collections){
-                const ref = collection(db, `artifacts/${appId}/users/${userId}/${key}`);
+                const ref = collection(db, "users", userId, key);
                 const unsub = onSnapshot(query(ref), (snapshot) => {
                     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     collections[key](data);
@@ -899,7 +893,7 @@ const app = initializeApp(firebaseConfig);
                 'goals': { tarefas: 10, revisoes: 10 }, 'horario': {}
             };
             for (const docId in defaultDocs) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/userData`, docId);
+                const docRef = doc(db, "users", userId, "userData", docId);
                 const unsub = onSnapshot(docRef, async (docSnap) => {
                     if (!docSnap.exists()) await setDoc(docRef, defaultDocs[docId]);
                     else {
@@ -915,14 +909,16 @@ const app = initializeApp(firebaseConfig);
 
         // --- Inicialização da Aplicação ---
         onAuthStateChanged(auth, async (user) => {
-            if (user) userId = user.uid;
-            else {
+            if (user) {
+                userId = user.uid;
+                setupFirestoreListeners();
+            } else {
                 try {
-                    const cred = initialAuthToken ? await signInWithCustomToken(auth, initialAuthToken) : await signInAnonymously(auth);
+                    const cred = await signInAnonymously(auth);
                     userId = cred.user.uid;
+                    setupFirestoreListeners();
                 } catch (error) { console.error("Authentication failed: ", error); }
             }
-            setupFirestoreListeners();
         });
 
         renderAllModals();
@@ -933,5 +929,4 @@ const app = initializeApp(firebaseConfig);
     </script>
 </body>
 </html>
-
 
