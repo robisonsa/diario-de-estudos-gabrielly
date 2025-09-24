@@ -961,10 +961,25 @@
                 loginContainer.classList.add('hidden');
                 appContainer.classList.remove('hidden');
 
+                const displayName = user.displayName || user.email || "Usuário";
+                const photoURL = user.photoURL;
+                
+                let profileImageHtml;
+                if (photoURL) {
+                    profileImageHtml = `<img src="${photoURL}" alt="Foto do perfil" class="w-10 h-10 rounded-full">`;
+                } else {
+                    const initial = displayName.charAt(0).toUpperCase();
+                    profileImageHtml = `
+                        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                            ${initial}
+                        </div>
+                    `;
+                }
+
                 userInfo.innerHTML = `
-                    <img src="${user.photoURL}" alt="Foto do perfil" class="w-10 h-10 rounded-full">
+                    ${profileImageHtml}
                     <div class="text-sm">
-                        <p class="font-bold text-slate-700">${user.displayName}</p>
+                        <p class="font-bold text-slate-700">${displayName}</p>
                         <button id="logout-btn" class="text-red-500 hover:underline">Sair</button>
                     </div>
                 `;
