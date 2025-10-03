@@ -309,8 +309,72 @@
         }
 
         // --- Funções Auxiliares ---
-        // ... (getLocalDate, populateSelects, toggleModal, switchTab, getStatusTarefa, getStatusRevisao are here, unchanged)
+        function getLocalDate() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        }
+
+        function populateSelects() {
+            const formSelects = document.querySelectorAll('select#tarefa-disciplina, select#conteudo-disciplina');
+            formSelects.forEach(select => {
+                select.innerHTML = '';
+                disciplinas.forEach(d => select.innerHTML += `<option value="${d}">${d}</option>`);
+            });
+
+            const filterSelects = document.querySelectorAll('select#filtro-disciplina, select#filtro-tarefa-disciplina');
+            filterSelects.forEach(select => {
+                select.innerHTML = '<option value="">Todas as Disciplinas</option>';
+                disciplinas.forEach(d => select.innerHTML += `<option value="${d}">${d}</option>`);
+            });
+        }
         
+        function toggleModal(modalId, show) {
+            const modal = document.getElementById(modalId);
+            if (show) modal.classList.add('active');
+            else modal.classList.remove('active');
+        }
+
+        // --- Lógica de Abas e Status ---
+        function switchTab(tabId) {
+            Object.keys(allTabs).forEach(key => {
+                allTabs[key].classList.remove('active');
+                allContents[key].classList.add('hidden');
+            });
+            allTabs[tabId].classList.add('active');
+            allContents[tabId].classList.remove('hidden');
+        }
+        
+        function getStatusTarefa(tarefa) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const dataEntrega = new Date(tarefa.dataEntrega + 'T00:00:00');
+            dataEntrega.setHours(0, 0, 0, 0);
+            const diffTime = dataEntrega.getTime() - hoje.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) return { status: 'vencido', text: `Venceu há ${-diffDays} dia(s)`, color: 'red' };
+            if (diffDays === 0) return { status: 'atencao_alta', text: 'Entrega hoje!', color: 'red' };
+            if (diffDays <= 3) return { status: 'atencao', text: `Entrega em ${diffDays} dia(s)`, color: 'yellow' };
+            return { status: 'folgado', text: `Prazo tranquilo`, color: 'blue' };
+        }
+
+        function getStatusRevisao(conteudo) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const ultimaRevisao = new Date(conteudo.ultimaRevisao.seconds * 1000);
+            const proximoIntervalo = REVISAO_INTERVALOS[conteudo.estagioRevisao] || REVISAO_INTERVALOS[REVISAO_INTERVALOS.length - 1];
+            const proximaRevisao = new Date(ultimaRevisao);
+            proximaRevisao.setDate(proximaRevisao.getDate() + proximoIntervalo);
+            proximaRevisao.setHours(0, 0, 0, 0);
+            const diffTime = proximaRevisao - hoje;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays <= 0) return { status: 'urgente', text: 'Revisar agora!', color: 'red', proxima: proximaRevisao };
+            if (diffDays <= 2) return { status: 'atencao', text: `Revisar em ${diffDays} dia(s)`, color: 'yellow', proxima: proximaRevisao };
+            return { status: 'revisado', text: `Próxima revisão em ${diffDays} dias`, color: 'green', proxima: proximaRevisao };
+        }
+
+
         // --- Funções de Renderização Principal ---
         function renderAll() {
             renderMeuDia();
@@ -336,19 +400,482 @@
             }
         }
         
-        // ... (renderMeuDia, renderTarefas, renderConteudos, etc. functions are here, unchanged)
+        function renderMeuDia() {
+            const prioridadesList = document.getElementById('prioridades-hoje-list');
+            prioridadesList.innerHTML = '';
+            const hojeStr = getLocalDate();
+            const tarefasHoje = allTarefas.filter(t => !t.concluida && t.dataEntrega === hojeStr);
+            const revisoesHoje = allConteudos.filter(c => getStatusRevisao(c).status === 'urgente');
+            
+            [...tarefasHoje, ...revisoesHoje].forEach(item => {
+                const isTarefa = !!item.dataEntrega;
+                prioridadesList.innerHTML += `<div class="border-l-4 ${isTarefa ? 'border-red-500' : 'border-red-500'} bg-slate-100 p-3 rounded-md">${isTarefa ? '<b>Tarefa:</b>' : '<b>Revisão:</b>'} ${item.descricao}</div>`;
+            });
+            if (prioridadesList.innerHTML === '') prioridadesList.innerHTML = '<p class="text-slate-500">Nenhuma prioridade para hoje. Que tal relaxar ou adiantar algo?</p>';
+
+            const metasContainer = document.getElementById('metas-semana-list');
+            const metaTarefas = userGoals.tarefas || 0;
+            const metaRevisoes = userGoals.revisoes || 0;
+            const tarefasProg = userStats.tarefasSemana || 0;
+            const revisoesProg = userStats.revisoesSemana || 0;
+            const percTarefas = metaTarefas > 0 ? Math.min(100, (tarefasProg / metaTarefas) * 100) : 0;
+            const percRevisoes = metaRevisoes > 0 ? Math.min(100, (revisoesProg / metaRevisoes) * 100) : 0;
+            metasContainer.innerHTML = `
+                <div>
+                    <div class="flex justify-between font-semibold"><p>Tarefas Concluídas</p><p>${tarefasProg} / ${metaTarefas}</p></div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5"><div class="bg-blue-600 h-2.5 rounded-full" style="width: ${percTarefas}%"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between font-semibold"><p>Revisões Feitas</p><p>${revisoesProg} / ${metaRevisoes}</p></div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5"><div class="bg-green-600 h-2.5 rounded-full" style="width: ${percRevisoes}%"></div></div>
+                </div>`;
+            
+            const conquistasContainer = document.getElementById('conquistas-list');
+            conquistasContainer.innerHTML = '';
+            for (const key in conquistasDef) {
+                const conquista = conquistasDef[key];
+                const unlocked = userStats.conquistas && userStats.conquistas[key];
+                conquistasContainer.innerHTML += `
+                    <div class="text-center p-2 rounded-lg ${unlocked ? 'bg-amber-100' : 'bg-slate-100 opacity-50'}" title="${conquista.nome}: ${conquista.desc}">
+                        <div class="text-4xl">${conquista.icon}</div>
+                        <p class="text-xs font-semibold mt-1 truncate">${conquista.nome}</p>
+                    </div>`;
+            }
+        }
+
+        function applyAndRenderTarefasFilters() {
+            const disciplina = filtroTarefaDisciplina.value;
+            const data = filtroTarefaData.value;
+            const pesquisa = filtroTarefaPesquisa.value.toLowerCase();
+            let filteredTarefas = allTarefas;
+            if (disciplina) filteredTarefas = filteredTarefas.filter(t => t.disciplina === disciplina);
+            if (data) filteredTarefas = filteredTarefas.filter(t => t.dataEntrega === data);
+            if (pesquisa) filteredTarefas = filteredTarefas.filter(t => t.descricao.toLowerCase().includes(pesquisa));
+            renderTarefas(filteredTarefas);
+        }
+
+        function renderTarefas(tarefas) {
+            tarefasList.innerHTML = '';
+            const pendentes = tarefas.filter(t => !t.concluida).sort((a,b) => new Date(a.dataEntrega) - new Date(b.dataEntrega));
+            const concluidas = tarefas.filter(t => t.concluida).sort((a,b) => new Date(b.dataEntrega) - new Date(a.dataEntrega));
+            if (tarefas.length === 0) {
+                 tarefasList.innerHTML = `<div class="text-center p-8 bg-white rounded-lg shadow"><p class="text-slate-500">Nenhuma tarefa encontrada.</p></div>`;
+                 return;
+            }
+            if(pendentes.length > 0) {
+                tarefasList.innerHTML += `<h3 class="text-xl font-semibold text-slate-700 mb-2 mt-4">Pendentes</h3>`;
+                pendentes.forEach(tarefa => {
+                    const info = getStatusTarefa(tarefa);
+                    const data = new Date(tarefa.dataEntrega + 'T03:00:00Z').toLocaleDateString('pt-BR');
+                    tarefasList.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-${info.color}-500">
+                        <div class="flex flex-col sm:flex-row justify-between">
+                            <div class="flex-1 mb-4 sm:mb-0">
+                                <div class="flex items-center mb-2 flex-wrap gap-x-3">
+                                    <span class="bg-${info.color}-100 text-${info.color}-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tarefa.disciplina}</span>
+                                    <span class="text-sm font-medium text-slate-600">Entrega: ${data}</span>
+                                    <span class="font-bold text-sm text-${info.color}-800">${info.text}</span>
+                                </div>
+                                <h4 class="text-lg font-bold text-slate-800">${tarefa.descricao}</h4>
+                                ${tarefa.fontes ? `<p class="text-sm text-slate-500 mt-1 whitespace-pre-wrap"><b>Fontes:</b> ${tarefa.fontes}</p>` : ''}
+                            </div>
+                            <div class="flex items-center space-x-2 justify-end">
+                                <button data-id="${tarefa.id}" class="editar-tarefa-btn bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                                <button data-id="${tarefa.id}" class="concluir-btn bg-green-500 text-white p-2 rounded-full hover:bg-green-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                                <button data-id="${tarefa.id}" class="deletar-tarefa-btn bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            }
+            if(concluidas.length > 0) {
+                 tarefasList.innerHTML += `<h3 class="text-xl font-semibold text-slate-700 mb-2 mt-8 opacity-70">Concluídas</h3>`;
+                 concluidas.forEach(tarefa => {
+                    tarefasList.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-slate-400 opacity-60">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1"><span class="text-sm text-slate-500">${tarefa.disciplina}</span><h4 class="text-lg font-bold text-slate-600 line-through">${tarefa.descricao}</h4></div>
+                            <button data-id="${tarefa.id}" class="deletar-tarefa-btn text-slate-400 hover:text-red-500 p-2 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                        </div>
+                    </div>`;
+                 });
+            }
+        }
+        
+        function applyAndRenderConteudosFilters() {
+            const disciplina = filtroDisciplina.value;
+            const status = filtroStatus.value;
+            const pesquisa = filtroPesquisa.value.toLowerCase();
+            let filtered = allConteudos;
+            if (disciplina) filtered = filtered.filter(c => c.disciplina === disciplina);
+            if (status) filtered = filtered.filter(c => getStatusRevisao(c).status === status);
+            if (pesquisa) filtered = filtered.filter(c => c.descricao.toLowerCase().includes(pesquisa) || (c.topicos && c.topicos.some(t => t.toLowerCase().includes(pesquisa))));
+            renderConteudos(filtered);
+        }
+
+        function renderConteudos(conteudos) {
+            conteudosList.innerHTML = '';
+            if (conteudos.length === 0) {
+                 conteudosList.innerHTML = `<div class="text-center p-8 bg-white rounded-lg shadow"><p class="text-slate-500">Nenhum conteúdo encontrado.</p></div>`;
+                 return;
+            }
+            conteudos.sort((a, b) => getStatusRevisao(a).proxima - getStatusRevisao(b).proxima).forEach(c => {
+                const info = getStatusRevisao(c);
+                const data = new Date(c.dataAula.seconds * 1000).toLocaleDateString('pt-BR');
+                let topicosHtml = '';
+                if (c.topicos && Array.isArray(c.topicos) && c.topicos.length > 0) {
+                    topicosHtml = `<div class="text-sm text-slate-600 mt-2"><b>Tópicos:</b><ul class="list-disc list-inside ml-2">${c.topicos.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
+                }
+                conteudosList.innerHTML += `
+                <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-${info.color}-500">
+                    <div class="flex flex-col sm:flex-row justify-between">
+                        <div class="flex-1 mb-4 sm:mb-0">
+                            <div class="flex items-center mb-2 flex-wrap">
+                                <span class="bg-${info.color}-100 text-${info.color}-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full">${c.disciplina}</span>
+                                <span class="text-sm font-medium text-slate-600">Aula de: ${data}</span>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800">${c.descricao}</h4>
+                            ${topicosHtml}
+                        </div>
+                        <div class="flex flex-col items-end justify-center text-right space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <button data-id="${c.id}" class="editar-conteudo-btn bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                                <button data-id="${c.id}" class="deletar-conteudo-btn bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                            </div>
+                            <span class="font-bold text-lg text-${info.color}-800">${info.text}</span>
+                            <button data-id="${c.id}" class="revisar-btn bg-${info.color}-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-${info.color}-600">Já revisei!</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+        
+        function renderHorario() {
+            const table = document.getElementById('horario-table');
+            let html = `<thead><tr><th class="p-2 border">Horário</th>${DIAS_SEMANA.map(dia => `<th class="p-2 border">${dia}</th>`).join('')}</tr></thead><tbody>`;
+            for (const horario of HORARIOS_AULA) {
+                html += `<tr><td class="p-2 border font-bold">${horario}</td>`;
+                for (const dia of DIAS_SEMANA) {
+                    const savedDisciplina = horarioData[dia] ? horarioData[dia][horario] || '' : '';
+                    html += `<td class="p-1 border"><select data-dia="${dia}" data-horario="${horario}" class="w-full border-0 focus:ring-0 text-center bg-transparent"><option value="">-</option>${disciplinas.map(d => `<option value="${d}" ${savedDisciplina === d ? 'selected' : ''}>${d}</option>`).join('')}</select></td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody>`;
+            table.innerHTML = html;
+        }
 
         // --- Lógica de Gamificação ---
-        // ... (addPoints, checkAndUnlockConquistas, showConquistaUnlocked are here, unchanged)
+        async function addPoints(type) {
+            if (!userId) return;
+
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            if (userStats.ultimoMes !== currentMonthStr) {
+                userStats.pontosMes = 0;
+                userStats.ultimoMes = currentMonthStr;
+            }
+
+            const todayStr = getLocalDate().slice(0, 10);
+            if(userStats.lastDay !== todayStr) {
+                userStats.tarefasHoje = 0;
+                userStats.lastDay = todayStr;
+            }
+            const dayOfWeek = now.getDay(); // Sunday=0, Monday=1
+            const firstDayOfWeek = new Date(now);
+            firstDayOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+            firstDayOfWeek.setHours(0,0,0,0);
+
+            if(!userStats.lastWeek || new Date(userStats.lastWeek) < firstDayOfWeek) {
+                 userStats.tarefasSemana = 0;
+                 userStats.revisoesSemana = 0;
+                 userStats.lastWeek = firstDayOfWeek.toISOString().slice(0,10);
+            }
+
+            if(type === 'tarefa') {
+                userStats.pontos = (userStats.pontos || 0) + 10;
+                userStats.pontosMes = (userStats.pontosMes || 0) + 10;
+                userStats.tarefasConcluidas = (userStats.tarefasConcluidas || 0) + 1;
+                userStats.tarefasHoje = (userStats.tarefasHoje || 0) + 1;
+                userStats.tarefasSemana = (userStats.tarefasSemana || 0) + 1;
+            } else if (type === 'revisao') {
+                userStats.pontos = (userStats.pontos || 0) + 5;
+                userStats.pontosMes = (userStats.pontosMes || 0) + 5;
+                userStats.revisoesFeitas = (userStats.revisoesFeitas || 0) + 1;
+                userStats.revisoesSemana = (userStats.revisoesSemana || 0) + 1;
+            } else if (type === 'pomodoro') {
+                userStats.pomodorosCompletos = (userStats.pomodorosCompletos || 0) + 1;
+            }
+            await checkAndUnlockConquistas();
+            await setDoc(doc(db, "users", userId, "userData", "stats"), userStats, { merge: true });
+        }
+
+        async function checkAndUnlockConquistas() {
+            if (!userStats.conquistas) userStats.conquistas = {};
+            for (const key in conquistasDef) {
+                if (!userStats.conquistas[key] && conquistasDef[key].req(userStats)) {
+                    userStats.conquistas[key] = true;
+                    showConquistaUnlocked(conquistasDef[key]);
+                }
+            }
+        }
+        
+        function showConquistaUnlocked(conquista) {
+            document.getElementById('conquista-icon').textContent = conquista.icon;
+            document.getElementById('conquista-nome').textContent = conquista.nome;
+            document.getElementById('conquista-desc').textContent = conquista.desc;
+            toggleModal('conquista-unlocked-modal', true);
+        }
         
         // --- Lógica do Pomodoro ---
-        // ... (pomodoro logic is here, unchanged)
+        let pomodoroInterval, pomodoroTime = 25 * 60, pomodoroMode = 'foco', isRunning = false;
+        const pomodoroTimer = document.getElementById('pomodoro-timer');
+        const pomodoroDisplay = () => document.getElementById('pomodoro-display');
+        const pomodoroStartPause = () => document.getElementById('pomodoro-start-pause');
+        const pomodoroReset = () => document.getElementById('pomodoro-reset');
+        const pomodoroStatus = () => document.getElementById('pomodoro-status');
         
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomodoroTime / 60);
+            const seconds = pomodoroTime % 60;
+            pomodoroDisplay().textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        function startPausePomodoro() {
+            isRunning = !isRunning;
+            if (isRunning) {
+                pomodoroStartPause().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`; // Pause Icon
+                pomodoroInterval = setInterval(() => {
+                    pomodoroTime--;
+                    updatePomodoroDisplay();
+                    if (pomodoroTime <= 0) {
+                        clearInterval(pomodoroInterval);
+                        if (pomodoroMode === 'foco') {
+                            pomodoroMode = 'pausa';
+                            pomodoroTime = 5 * 60;
+                            pomodoroStatus().textContent = "Pausa Rápida!";
+                            pomodoroStatus().classList.replace('text-green-600', 'text-blue-600');
+                            addPoints('pomodoro');
+                        } else {
+                            pomodoroMode = 'foco';
+                            pomodoroTime = 25 * 60;
+                            pomodoroStatus().textContent = "Hora de Focar!";
+                            pomodoroStatus().classList.replace('text-blue-600', 'text-green-600');
+                        }
+                        isRunning = false;
+                        startPausePomodoro();
+                    }
+                }, 1000);
+            } else {
+                pomodoroStartPause().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`; // Play Icon
+                clearInterval(pomodoroInterval);
+            }
+        }
+        function resetPomodoro() {
+            clearInterval(pomodoroInterval);
+            isRunning = false;
+            pomodoroMode = 'foco';
+            pomodoroTime = 25 * 60;
+            pomodoroStatus().textContent = "Hora de Focar!";
+            pomodoroStatus().classList.replace('text-blue-600', 'text-green-600');
+            updatePomodoroDisplay();
+            pomodoroStartPause().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+            pomodoroReset().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>`; // Stop Icon
+        }
+        
+        function addTopicInput(value = '', focus = true) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-center space-x-2';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'w-full border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 topic-input';
+            input.placeholder = 'Digite um tópico e pressione Enter';
+            input.value = value;
+            wrapper.innerHTML = `<span class="text-green-500 font-bold">&bull;</span>`;
+            wrapper.appendChild(input);
+            document.getElementById('conteudo-topicos-container').appendChild(wrapper);
+            if (focus) input.focus();
+        }
+
         // --- Event Listeners ---
         function attachAllEventListeners() {
             Object.keys(allTabs).forEach(tabId => allTabs[tabId].addEventListener('click', () => switchTab(tabId)));
             
-            // ... (rest of the event listeners are here, unchanged)
+            document.getElementById('open-tarefa-modal').addEventListener('click', () => {
+                document.getElementById('tarefa-form').reset();
+                document.getElementById('tarefa-id').value = '';
+                document.getElementById('tarefa-modal-title').textContent = 'Nova Tarefa de Casa';
+                document.getElementById('tarefa-entrega').value = getLocalDate();
+                toggleModal('tarefa-modal', true);
+            });
+            document.getElementById('open-conteudo-modal').addEventListener('click', () => {
+                document.getElementById('conteudo-form').reset();
+                document.getElementById('conteudo-id').value = '';
+                document.getElementById('conteudo-modal-title').textContent = 'Novo Conteúdo de Aula';
+                document.getElementById('conteudo-data').value = getLocalDate();
+                document.getElementById('conteudo-topicos-container').innerHTML = '';
+                addTopicInput('', false);
+                toggleModal('conteudo-modal', true);
+            });
+            document.getElementById('edit-goals-btn').addEventListener('click', () => {
+                document.getElementById('meta-tarefas').value = userGoals.tarefas || 10;
+                document.getElementById('meta-revisoes').value = userGoals.revisoes || 10;
+                toggleModal('metas-modal', true);
+            });
+            
+            document.body.addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const targetId = btn.id;
+
+                if (targetId === 'close-conquista-modal') {
+                    toggleModal('conquista-unlocked-modal', false);
+                    return;
+                }
+
+                if (targetId && (targetId.startsWith('close-') || targetId.startsWith('cancel-'))) {
+                    const modalId = targetId.split('-')[1] + '-modal';
+                    toggleModal(modalId, false);
+                }
+            });
+
+            document.getElementById('tarefa-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                if (!userId) return;
+                const id = document.getElementById('tarefa-id').value;
+                const data = {
+                    disciplina: document.getElementById('tarefa-disciplina').value,
+                    descricao: document.getElementById('tarefa-descricao').value,
+                    dataEntrega: document.getElementById('tarefa-entrega').value,
+                    fontes: document.getElementById('tarefa-fontes').value,
+                };
+                try {
+                    const docRef = id ? doc(db, "users", userId, "tarefas", id) : collection(db, "users", userId, "tarefas");
+                    if (id) await updateDoc(docRef, data);
+                    else await addDoc(docRef, { ...data, concluida: false, criadoEm: new Date() });
+                } catch (error) { console.error("Erro ao salvar tarefa:", error); }
+                toggleModal('tarefa-modal', false);
+            });
+            document.getElementById('conteudo-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                if (!userId) return;
+                const id = document.getElementById('conteudo-id').value;
+                const data = {
+                    disciplina: document.getElementById('conteudo-disciplina').value,
+                    descricao: document.getElementById('conteudo-descricao').value,
+                    dataAula: Timestamp.fromDate(new Date(document.getElementById('conteudo-data').value + 'T03:00:00Z')),
+                    topicos: Array.from(document.querySelectorAll('.topic-input')).map(i => i.value.trim()).filter(Boolean),
+                };
+                try {
+                    const docRef = id ? doc(db, "users", userId, "conteudos", id) : collection(db, "users", userId, "conteudos");
+                    if(id) await updateDoc(docRef, data);
+                    else await addDoc(docRef, { ...data, ultimaRevisao: data.dataAula, estagioRevisao: 0 });
+                } catch(error){ console.error("Erro ao salvar conteudo:", error); }
+                toggleModal('conteudo-modal', false);
+            });
+            document.getElementById('senha-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                const senha = document.getElementById('senha-input').value;
+                if (senha === SENHA_MESTRA) {
+                    toggleModal('senha-modal', false);
+                    if (pendingAction === 'deleteConteudo') await deleteDoc(doc(db, "users", userId, "conteudos", pendingDocId));
+                    else if (pendingAction === 'editConteudo') {
+                        const docSnap = await getDoc(doc(db, "users", userId, "conteudos", pendingDocId));
+                        if(docSnap.exists()){
+                            const c = docSnap.data();
+                            document.getElementById('conteudo-id').value = pendingDocId;
+                            document.getElementById('conteudo-modal-title').textContent = 'Editar Conteúdo';
+                            document.getElementById('conteudo-disciplina').value = c.disciplina;
+                            document.getElementById('conteudo-descricao').value = c.descricao;
+                            document.getElementById('conteudo-data').value = new Date(c.dataAula.seconds * 1000).toISOString().split('T')[0];
+                            document.getElementById('conteudo-topicos-container').innerHTML = '';
+                            c.topicos?.forEach(t => addTopicInput(t, false));
+                            addTopicInput('', false);
+                            toggleModal('conteudo-modal', true);
+                        }
+                    }
+                } else document.getElementById('senha-error').textContent = 'Senha incorreta.';
+            });
+            document.getElementById('metas-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                userGoals.tarefas = parseInt(document.getElementById('meta-tarefas').value) || 0;
+                userGoals.revisoes = parseInt(document.getElementById('meta-revisoes').value) || 0;
+                await setDoc(doc(db, "users", userId, "userData", "goals"), userGoals);
+                toggleModal('metas-modal', false);
+            });
+
+            tarefasList.addEventListener('click', async e => {
+                const btn = e.target.closest('button');
+                if(!btn) return;
+                const id = btn.dataset.id;
+                const docRef = doc(db, "users", userId, "tarefas", id);
+                if(btn.classList.contains('concluir-btn')){
+                    await updateDoc(docRef, { concluida: true });
+                    await addPoints('tarefa');
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                } else if(btn.classList.contains('deletar-tarefa-btn')){
+                     await deleteDoc(docRef);
+                } else if(btn.classList.contains('editar-tarefa-btn')){
+                    const docSnap = await getDoc(docRef);
+                    if(docSnap.exists()){
+                        const t = docSnap.data();
+                        document.getElementById('tarefa-id').value = id;
+                        document.getElementById('tarefa-modal-title').textContent = 'Editar Tarefa';
+                        document.getElementById('tarefa-disciplina').value = t.disciplina;
+                        document.getElementById('tarefa-descricao').value = t.descricao;
+                        document.getElementById('tarefa-entrega').value = t.dataEntrega;
+                        document.getElementById('tarefa-fontes').value = t.fontes;
+                        toggleModal('tarefa-modal', true);
+                    }
+                }
+            });
+            conteudosList.addEventListener('click', async e => {
+                const btn = e.target.closest('button');
+                if(!btn) return;
+                const id = btn.dataset.id;
+                const docRef = doc(db, "users", userId, "conteudos", id);
+                const handleProtected = (action, docId) => {
+                    pendingAction = action; pendingDocId = docId;
+                    document.getElementById('senha-form').reset();
+                    document.getElementById('senha-error').textContent = '';
+                    toggleModal('senha-modal', true);
+                };
+                if(btn.classList.contains('revisar-btn')){
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        const novoEstagio = data.estagioRevisao < REVISAO_INTERVALOS.length - 1 ? data.estagioRevisao + 1 : data.estagioRevisao;
+                        await updateDoc(docRef, { ultimaRevisao: new Date(), estagioRevisao: novoEstagio });
+                        await addPoints('revisao');
+                    }
+                } else if(btn.classList.contains('deletar-conteudo-btn')) handleProtected('deleteConteudo', id);
+                else if(btn.classList.contains('editar-conteudo-btn')) handleProtected('editConteudo', id);
+            });
+            document.getElementById('conteudo-topicos-container').addEventListener('keydown', e => {
+                 if (e.key === 'Enter') { e.preventDefault(); addTopicInput(); }
+                 if (e.key === 'Backspace' && e.target.value === '' && document.querySelectorAll('.topic-input').length > 1) {
+                     e.preventDefault(); e.target.parentElement.remove();
+                 }
+            });
+
+            [filtroTarefaDisciplina, filtroTarefaData].forEach(el => el.addEventListener('change', applyAndRenderTarefasFilters));
+            filtroTarefaPesquisa.addEventListener('input', applyAndRenderTarefasFilters);
+            [filtroDisciplina, filtroStatus].forEach(el => el.addEventListener('change', applyAndRenderConteudosFilters));
+            filtroPesquisa.addEventListener('input', applyAndRenderConteudosFilters);
+            
+            document.getElementById('save-horario-btn').addEventListener('click', async () => {
+                const newHorarioData = {};
+                document.querySelectorAll('#horario-table select').forEach(s => {
+                    const { dia, horario } = s.dataset;
+                    if (!newHorarioData[dia]) newHorarioData[dia] = {};
+                    newHorarioData[dia][horario] = s.value;
+                });
+                await setDoc(doc(db, "users", userId, "userData", "horario"), newHorarioData);
+            });
+            
+            document.getElementById('pomodoro-toggle-btn').addEventListener('click', () => pomodoroTimer.classList.add('expanded'));
+            document.getElementById('pomodoro-minimize-btn').addEventListener('click', () => pomodoroTimer.classList.remove('expanded'));
+            pomodoroStartPause().addEventListener('click', startPausePomodoro);
+            pomodoroReset().addEventListener('click', resetPomodoro);
         }
 
         // --- Interação com Firestore ---
