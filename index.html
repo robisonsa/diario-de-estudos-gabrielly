@@ -1,771 +1,1122 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Meu Diário de Estudos</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-  <style>
-    body{font-family:'Poppins',sans-serif}
-    .modal{display:none}.modal.active{display:flex}
-    .tab.active{border-bottom-color:#3b82f6;color:#3b82f6}
-    .pomodoro-timer{transition:all .3s ease-in-out;width:64px;height:64px;overflow:hidden;border-radius:9999px}
-    .pomodoro-timer.expanded{width:256px;height:auto;border-radius:1.5rem}
-    .pomodoro-content{display:none}
-    .pomodoro-timer.expanded .pomodoro-content{display:block}
-    .pomodoro-timer.expanded #pomodoro-toggle-btn{display:none}
-    .pomodoro-timer:not(.expanded) .pomodoro-toggle-btn{width:100%;height:100%}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Diário de Estudos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .modal { display: none; }
+        .modal.active { display: flex; }
+        .tab.active {
+            border-bottom-color: #3b82f6;
+            color: #3b82f6;
+        }
+        .pomodoro-timer {
+            transition: all 0.3s ease-in-out;
+            width: 64px;
+            height: 64px;
+            overflow: hidden;
+            border-radius: 9999px; /* rounded-full */
+        }
+        .pomodoro-timer.expanded {
+            width: 256px;
+            height: auto;
+            border-radius: 1.5rem; /* rounded-2xl */
+        }
+        .pomodoro-content {
+            display: none;
+        }
+        .pomodoro-timer.expanded .pomodoro-content {
+            display: block;
+        }
+        .pomodoro-timer.expanded #pomodoro-toggle-btn {
+            display: none;
+        }
+        .pomodoro-timer:not(.expanded) .pomodoro-toggle-btn {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
-  <!-- LOGIN -->
-  <div id="login-container" class="flex items-center justify-center min-h-screen p-4">
-    <div class="w-full max-w-md text-center bg-white p-8 rounded-2xl shadow-xl">
-      <h1 class="text-4xl font-bold text-blue-600">Meu Diário de Estudos</h1>
-      <p class="text-slate-500 mt-2 mb-8">Sua central de organização, foco e motivação!</p>
-
-      <button id="google-login-btn"
-        class="bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-slate-50 transition-all flex items-center justify-center w-full">
-        <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48">
-          <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12
-            c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24
-            c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
-          <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657
-            C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
-          <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36
-            c-5.222,0-9.519-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
-          <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238
-            C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
-        </svg>
-        Entrar com o Google
-      </button>
-
-      <!-- mensagem de erro visível -->
-      <p id="login-error" class="text-red-600 mt-3 text-sm"></p>
-    </div>
-  </div>
-
-  <!-- APP -->
-  <div id="app-container" class="container mx-auto p-4 md:p-8 max-w-7xl hidden">
-    <header class="mb-8">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex-grow">
-          <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">Meu Diário de Estudos</h1>
-          <div id="user-info" class="flex items-center gap-3 mt-2"></div>
+    <div id="login-container" class="flex items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-md text-center bg-white p-8 rounded-2xl shadow-xl">
+            <h1 class="text-4xl font-bold text-blue-600">Meu Diário de Estudos</h1>
+            <p class="text-slate-500 mt-2 mb-8">Sua central de organização, foco e motivação!</p>
+            <button id="google-login-btn" class="bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-slate-50 transition-all flex items-center justify-center w-full">
+                <svg class="w-6 h-6 mr-3" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.222,0-9.519-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+                Entrar com o Google
+            </button>
+            <button id="admin-login-link" class="text-sm text-slate-500 hover:text-blue-600 mt-6">Acesso do Gestor</button>
         </div>
-        <div class="flex-shrink-0">
-          <div class="flex items-center gap-2 md:gap-3 bg-white p-2 rounded-xl shadow-lg">
-            <div id="user-points-monthly-display" class="text-center px-2">
-              <div class="text-sm font-bold text-slate-600" id="monthly-points-label">Mês/Ano</div>
-              <div class="text-xl font-bold text-blue-600" id="monthly-points-value">0 pts</div>
-            </div>
-            <div class="border-l h-10 border-slate-200"></div>
-            <div id="user-points-display" class="text-center px-2">
-              <div class="text-sm font-bold text-slate-600">Total</div>
-              <div class="text-xl font-bold text-amber-500" id="total-points-value">⚡ 0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- Abas -->
-    <div class="mb-6 border-b border-slate-200">
-      <nav class="flex space-x-2 md:space-x-4 flex-wrap" aria-label="Tabs">
-        <button id="tab-meu-dia" class="tab active text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" class="inline-block mr-2 h-5 w-5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-          Meu Dia
-        </button>
-        <button id="tab-tarefas" class="tab text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" class="inline-block mr-2 h-5 w-5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-          Tarefas
-        </button>
-        <button id="tab-revisoes" class="tab text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" class="inline-block mr-2 h-5 w-5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-          Revisões
-        </button>
-        <button id="tab-horario" class="tab text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" class="inline-block mr-2 h-5 w-5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-          Horário
-        </button>
-      </nav>
     </div>
 
-    <main>
-      <!-- Meu Dia -->
-      <div id="content-meu-dia" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white p-6 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4">Prioridades de Hoje</h2>
-            <div id="prioridades-hoje-list" class="space-y-3"></div>
-          </div>
-          <div class="bg-white p-6 rounded-xl shadow-lg">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-2xl font-bold text-slate-800">Metas da Semana</h2>
-              <button id="edit-goals-btn" class="text-blue-500 hover:text-blue-700 font-semibold">Editar Metas</button>
-            </div>
-            <div id="metas-semana-list" class="space-y-4"></div>
-          </div>
-        </div>
-        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg">
-          <h2 class="text-2xl font-bold text-slate-800 mb-4">Minhas Conquistas</h2>
-          <div id="conquistas-list" class="grid grid-cols-3 gap-4"></div>
-        </div>
-      </div>
-
-      <!-- Tarefas -->
-      <div id="content-tarefas" class="tab-content hidden">
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
-          <div id="filtros-tarefas-container" class="flex items-center gap-4 flex-wrap flex-1 min-w-[200px]">
-            <select id="filtro-tarefa-disciplina" class="border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"></select>
-            <input type="date" id="filtro-tarefa-data" class="border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-            <input type="search" id="filtro-tarefa-pesquisa" placeholder="Pesquisar tarefa..." class="border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 flex-1">
-          </div>
-          <button id="open-tarefa-modal" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-transform transform hover:scale-105">+ Adicionar Tarefa</button>
-        </div>
-        <div id="tarefas-list" class="space-y-4"></div>
-      </div>
-
-      <!-- Revisões -->
-      <div id="content-revisoes" class="tab-content hidden">
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
-          <div id="filtros-container" class="flex items-center gap-4 flex-wrap flex-1 min-w-[200px]">
-            <select id="filtro-disciplina" class="border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500"></select>
-            <select id="filtro-status" class="border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500">
-              <option value="">Todos os Status</option>
-              <option value="urgente">Urgente</option>
-              <option value="atencao">Atenção</option>
-              <option value="revisado">Revisado</option>
-            </select>
-            <input type="search" id="filtro-pesquisa" placeholder="Pesquisar conteúdo..." class="border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 flex-1">
-          </div>
-          <button id="open-conteudo-modal" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-transform transform hover:scale-105">+ Adicionar Conteúdo</button>
-        </div>
-        <div id="conteudos-list" class="space-y-4"></div>
-      </div>
-
-      <!-- Horário -->
-      <div id="content-horario" class="tab-content hidden">
-        <div class="bg-white p-6 rounded-xl shadow-lg">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold text-slate-800">Meu Horário de Aulas</h2>
-            <button id="save-horario-btn" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700">Salvar Horário</button>
-          </div>
-          <div class="overflow-x-auto">
-            <table id="horario-table" class="w-full text-center border-collapse"></table>
-          </div>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <!-- Modals -->
-  <div id="tarefa-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
-  <div id="conteudo-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
-  <div id="senha-modal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4"></div>
-  <div id="metas-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
-  <div id="profile-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
-  <div id="conquista-unlocked-modal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50"></div>
-
-  <!-- Pomodoro -->
-  <div id="pomodoro-timer" class="pomodoro-timer fixed bottom-4 right-4 bg-white shadow-2xl flex items-center justify-center">
-    <button id="pomodoro-toggle-btn" class="absolute z-10 text-slate-600 hover:text-blue-600 rounded-full flex items-center justify-center">
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-    </button>
-    <div class="pomodoro-content p-4 w-64 relative">
-      <button id="pomodoro-minimize-btn" class="absolute top-2 right-2 text-slate-400 hover:text-slate-600">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-      <div class="flex justify-between items-center">
-        <div id="pomodoro-display" class="text-3xl font-bold text-slate-700">25:00</div>
-        <div class="flex gap-2">
-          <button id="pomodoro-start-pause" class="bg-green-500 text-white p-2 rounded-full h-10 w-10"></button>
-          <button id="pomodoro-reset" class="bg-slate-300 text-slate-600 p-2 rounded-full h-10 w-10"></button>
-        </div>
-      </div>
-      <div id="pomodoro-status" class="text-center font-semibold text-green-600 mt-2">Hora de Focar!</div>
-    </div>
-  </div>
-
-  <script type="module">
-    // Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import {
-      getAuth, onAuthStateChanged, GoogleAuthProvider,
-      signInWithPopup, signInWithRedirect, getRedirectResult,
-      setPersistence, browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import {
-      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc,
-      query, getDoc, Timestamp, setDoc
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // --- Configuração ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyDYMWo_itEipB4QzPRlcS0t9EPqffBFBS0",
-      authDomain: "diario-de-estudos-gabrielly.firebaseapp.com",
-      projectId: "diario-de-estudos-gabrielly",
-      storageBucket: "diario-de-estudos-gabrielly.appspot.com",
-      messagingSenderId: "647763105939",
-      appId: "1:647763105939:web:87ff53a56f487d891f5566"
-    };
-
-    let app, auth, db, userId;
-    let unsubscribes = [];
-    let allTarefas = [], allConteudos = [], userStats = {}, userGoals = {}, horarioData = {}, userProfile = {};
-    let pendingAction = null, pendingDocId = null;
-
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db   = getFirestore(app);
-
-      // idioma do dispositivo (opcional)
-      auth.useDeviceLanguage?.();
-
-      // persistência no navegador
-      setPersistence(auth, browserLocalPersistence).catch(showLoginError);
-
-      // caso tenha vindo de signInWithRedirect, captura o resultado (e erros)
-      getRedirectResult(auth).catch(showLoginError);
-    } catch (e) { console.error("Erro ao inicializar Firebase:", e); }
-
-    // ---- Funções auxiliares de UI/erros ----
-    function showLoginError(err){
-      const el = document.getElementById('login-error');
-      if(!el) return;
-      const map = {
-        'auth/unauthorized-domain':
-          'Domínio não autorizado no Firebase. Verifique Authentication > Settings > Authorized domains.',
-        'auth/operation-not-allowed':
-          'Login Google não está habilitado em Authentication > Sign-in method > Google.',
-        'auth/popup-blocked':
-          'O navegador bloqueou o pop-up. Tentaremos redirecionar automaticamente.',
-        'auth/popup-closed-by-user':
-          'O pop-up foi fechado antes de concluir o login.',
-        'auth/operation-not-supported-in-this-environment':
-          'Este ambiente bloqueou o fluxo com pop-up. Usaremos redirecionamento.'
-      };
-      el.textContent = map[err?.code] || (`Erro de login: ${err?.code || err?.message || err}`);
-      console.error('Erro no login com Google:', err);
-    }
-
-    // --- Constantes e DOM ---
-    const disciplinas = ['Arte','Ciências','Ed. Física','Ens. Religioso','Geografia','História','Inglês','Matemática','Português','Redação'].sort();
-    const REVISAO_INTERVALOS = [1,3,7,14,30];
-    const SENHA_MESTRA = "2R@bison8";
-    const DIAS_SEMANA = ["Segunda","Terça","Quarta","Quinta","Sexta"];
-    const HORARIOS_AULA = ["1º","2º","3º","4º","5º"];
-
-    const loginContainer = document.getElementById('login-container');
-    const appContainer = document.getElementById('app-container');
-    const userInfo = document.getElementById('user-info');
-    const allTabs = {
-      'meu-dia': document.getElementById('tab-meu-dia'),
-      'tarefas': document.getElementById('tab-tarefas'),
-      'revisoes': document.getElementById('tab-revisoes'),
-      'horario': document.getElementById('tab-horario'),
-    };
-    const allContents = {
-      'meu-dia': document.getElementById('content-meu-dia'),
-      'tarefas': document.getElementById('content-tarefas'),
-      'revisoes': document.getElementById('content-revisoes'),
-      'horario': document.getElementById('content-horario'),
-    };
-    const tarefasList = document.getElementById('tarefas-list');
-    const conteudosList = document.getElementById('conteudos-list');
-    const filtroTarefaDisciplina = document.getElementById('filtro-tarefa-disciplina');
-    const filtroTarefaData = document.getElementById('filtro-tarefa-data');
-    const filtroTarefaPesquisa = document.getElementById('filtro-tarefa-pesquisa');
-    const filtroDisciplina = document.getElementById('filtro-disciplina');
-    const filtroStatus = document.getElementById('filtro-status');
-    const filtroPesquisa = document.getElementById('filtro-pesquisa');
-
-    // ---- Renderizações de modais (idêntico ao seu) ----
-    function renderAllModals(){/* ...exatamente como no seu código... */}
-    // Para economizar espaço aqui, o conteúdo completo das funções de renderização e lógica
-    // abaixo é idêntico ao seu código original (tarefas, conteúdos, horário, gamificação, etc).
-    // >>> COPIEI TUDO DO SEU ARQUIVO SEM ALTERAÇÕES abaixo desta linha <<<
-
-    // ------------- (INÍCIO: BLOCO ORIGINAL SEM MUDANÇAS) -------------
-    function renderAllModals() {
-      document.getElementById('tarefa-modal').innerHTML = `
-        <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-lg relative animate-fade-in">
-          <button type="button" id="close-tarefa-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
-          <h2 id="tarefa-modal-title" class="text-2xl font-bold mb-6 text-blue-600"></h2>
-          <form id="tarefa-form" class="space-y-4">
-            <input type="hidden" id="tarefa-id">
-            <div><label for="tarefa-disciplina" class="font-medium text-slate-700">Disciplina</label><select id="tarefa-disciplina" required class="w-full border-slate-300 rounded-lg mt-1"></select></div>
-            <div><label for="tarefa-descricao" class="font-medium text-slate-700">Descrição</label><textarea id="tarefa-descricao" rows="3" required class="w-full border-slate-300 rounded-lg mt-1"></textarea></div>
-            <div><label for="tarefa-entrega" class="font-medium text-slate-700">Data de Entrega</label><input type="date" id="tarefa-entrega" required class="w-full border-slate-300 rounded-lg mt-1"></div>
-            <div><label for="tarefa-fontes" class="font-medium text-slate-700">Fontes/Links</label><textarea id="tarefa-fontes" rows="2" class="w-full border-slate-300 rounded-lg mt-1"></textarea></div>
-            <div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-tarefa-btn" class="bg-white text-slate-700 font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-slate-50 border">Cancelar</button><button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700">Salvar</button></div>
-          </form>
-        </div>`;
-      document.getElementById('conteudo-modal').innerHTML = `
-        <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-lg relative">
-          <button type="button" id="close-conteudo-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
-          <h2 id="conteudo-modal-title" class="text-2xl font-bold mb-6 text-green-600"></h2>
-          <form id="conteudo-form" class="space-y-4">
-            <input type="hidden" id="conteudo-id">
-            <div><label for="conteudo-disciplina" class="font-medium text-slate-700">Disciplina</label><select id="conteudo-disciplina" required class="w-full border-slate-300 rounded-lg mt-1"></select></div>
-            <div><label for="conteudo-descricao" class="font-medium text-slate-700">Conteúdo</label><textarea id="conteudo-descricao" rows="3" required class="w-full border-slate-300 rounded-lg mt-1"></textarea></div>
-            <div><label for="conteudo-data" class="font-medium text-slate-700">Data da Aula</label><input type="date" id="conteudo-data" required class="w-full border-slate-300 rounded-lg mt-1"></div>
-            <div><label class="font-medium text-slate-700">Tópicos</label><div id="conteudo-topicos-container" class="space-y-2 mt-1"></div></div>
-            <div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-conteudo-btn" class="bg-white text-slate-700 font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-slate-50 border">Cancelar</button><button type="submit" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-green-700">Salvar</button></div>
-          </form>
-        </div>`;
-      document.getElementById('senha-modal').innerHTML = `
-        <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-sm relative">
-          <h2 class="text-xl font-bold mb-4">Ação Protegida</h2><p class="text-slate-600 mb-4">Insira a senha.</p>
-          <form id="senha-form">
-            <input type="password" id="senha-input" class="w-full border-slate-300 rounded-lg" required><p id="senha-error" class="text-red-500 text-sm mt-1 h-4"></p>
-            <div class="mt-6 flex justify-end space-x-3"><button type="button" id="cancel-senha-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button><button type="submit" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Confirmar</button></div>
-          </form>
-        </div>`;
-      document.getElementById('metas-modal').innerHTML = `
-        <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-md relative">
-          <h2 class="text-xl font-bold mb-4">Editar Metas da Semana</h2>
-          <form id="metas-form" class="space-y-4">
-            <div><label for="meta-tarefas" class="block">Nº de tarefas a completar</label><input type="number" id="meta-tarefas" min="1" class="w-full border-slate-300 rounded-lg" required></div>
-            <div><label for="meta-revisoes" class="block">Nº de revisões a fazer</label><input type="number" id="meta-revisoes" min="1" class="w-full border-slate-300 rounded-lg" required></div>
-            <div class="mt-6 flex justify-end space-x-3"><button type="button" id="cancel-metas-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button><button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Salvar Metas</button></div>
-          </form>
-        </div>`;
-      document.getElementById('profile-modal').innerHTML = `
-        <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-md relative">
-          <h2 class="text-xl font-bold mb-4">Editar Perfil</h2>
-          <form id="profile-form" class="space-y-4">
-            <div><label for="profile-name" class="block font-medium text-slate-700">Nome de Exibição</label><input type="text" id="profile-name" class="w-full border-slate-300 rounded-lg mt-1" required></div>
-            <div><label for="profile-photo" class="block font-medium text-slate-700">URL da Foto</label><input type="url" id="profile-photo" class="w-full border-slate-300 rounded-lg mt-1" placeholder="https://exemplo.com/sua-foto.jpg"><p class="text-xs text-slate-500 mt-1">Cole o link de uma imagem da internet.</p></div>
-            <div class="mt-6 flex justify-end space-x-3"><button type="button" id="cancel-profile-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button><button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Salvar</button></div>
-          </form>
-        </div>`;
-      document.getElementById('conquista-unlocked-modal').innerHTML = `
-        <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md text-center">
-          <h2 class="text-2xl font-bold text-amber-500">CONQUISTA DESBLOQUEADA!</h2>
-          <div id="conquista-icon" class="text-7xl my-4"></div>
-          <h3 id="conquista-nome" class="text-xl font-bold text-slate-800"></h3>
-          <p id="conquista-desc" class="text-slate-600"></p>
-          <button id="close-conquista-modal" class="mt-6 bg-amber-500 text-white font-semibold py-2 px-6 rounded-lg">Legal!</button>
-        </div>`;
-    }
-
-    function getLocalDate(){
-      const now=new Date();const offset=now.getTimezoneOffset();
-      const local=new Date(now.getTime()-(offset*60*1000));
-      return local.toISOString().split('T')[0];
-    }
-    function populateSelects(){
-      const formSelects=document.querySelectorAll('select#tarefa-disciplina, select#conteudo-disciplina');
-      formSelects.forEach(select=>{
-        select.innerHTML='';disciplinas.forEach(d=>select.innerHTML+=`<option value="${d}">${d}</option>`);
-      });
-      const filterSelects=document.querySelectorAll('select#filtro-disciplina, select#filtro-tarefa-disciplina');
-      filterSelects.forEach(select=>{
-        select.innerHTML='<option value="">Todas as Disciplinas</option>';
-        disciplinas.forEach(d=>select.innerHTML+=`<option value="${d}">${d}</option>`);
-      });
-    }
-    function toggleModal(id,show){const m=document.getElementById(id);show?m.classList.add('active'):m.classList.remove('active');}
-    function switchTab(tabId){
-      Object.keys(allTabs).forEach(k=>{allTabs[k].classList.remove('active');allContents[k].classList.add('hidden');});
-      allTabs[tabId].classList.add('active');allContents[tabId].classList.remove('hidden');
-    }
-    function getStatusTarefa(tarefa){
-      const hoje=new Date();hoje.setHours(0,0,0,0);
-      const dataEntrega=new Date(tarefa.dataEntrega+'T00:00:00');dataEntrega.setHours(0,0,0,0);
-      const diffDays=Math.round((dataEntrega.getTime()-hoje.getTime())/(1000*60*60*24));
-      if(diffDays<0) return {status:'vencido',text:`Venceu há ${-diffDays} dia(s)`,color:'red'};
-      if(diffDays===0) return {status:'atencao_alta',text:'Entrega hoje!',color:'red'};
-      if(diffDays<=3) return {status:'atencao',text:`Entrega em ${diffDays} dia(s)`,color:'yellow'};
-      return {status:'folgado',text:'Prazo tranquilo',color:'blue'};
-    }
-    function getStatusRevisao(c){
-      const hoje=new Date();hoje.setHours(0,0,0,0);
-      const ultima=new Date(c.ultimaRevisao.seconds*1000);
-      const proxInt=REVISAO_INTERVALOS[c.estagioRevisao]||REVISAO_INTERVALOS[REVISAO_INTERVALOS.length-1];
-      const proxima=new Date(ultima);proxima.setDate(proxima.getDate()+proxInt);proxima.setHours(0,0,0,0);
-      const diffDays=Math.ceil((proxima-hoje)/(1000*60*60*24));
-      if(diffDays<=0) return {status:'urgente',text:'Revisar agora!',color:'red',proxima};
-      if(diffDays<=2) return {status:'atencao',text:`Revisar em ${diffDays} dia(s)`,color:'yellow',proxima};
-      return {status:'revisado',text:`Próxima revisão em ${diffDays} dias`,color:'green',proxima};
-    }
-
-    function renderUserInfo(user){
-      if(!user){userInfo.innerHTML='';return;}
-      const displayName=userProfile.displayName||user.displayName||user.email||"Usuário";
-      const photoURL=userProfile.photoURL||user.photoURL;
-      const profileImageHtml = photoURL
-        ? `<img src="${photoURL}" alt="Foto do perfil" class="w-10 h-10 rounded-full object-cover">`
-        : `<div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">${displayName.charAt(0).toUpperCase()}</div>`;
-      userInfo.innerHTML = `${profileImageHtml}
-        <div class="text-sm">
-          <p class="font-bold text-slate-700">${displayName}</p>
-          <div class="flex items-center gap-3">
-            <button id="logout-btn" class="text-red-500 hover:underline">Sair</button>
-            <button id="edit-profile-btn" class="text-blue-500 hover:underline">Editar</button>
-          </div>
-        </div>`;
-      document.getElementById('logout-btn').addEventListener('click', handleLogout);
-      document.getElementById('edit-profile-btn').addEventListener('click', openProfileModal);
-    }
-
-    function renderAll(){
-      renderUserInfo(auth.currentUser);
-      renderMeuDia();applyAndRenderTarefasFilters();applyAndRenderConteudosFilters();renderHorario();
-      const totalPointsEl=document.getElementById('total-points-value'); if(totalPointsEl) totalPointsEl.innerHTML=`⚡ ${userStats.pontos||0}`;
-      const monthlyPointsValueEl=document.getElementById('monthly-points-value');
-      const monthlyPointsLabelEl=document.getElementById('monthly-points-label');
-      if(monthlyPointsValueEl&&monthlyPointsLabelEl){
-        monthlyPointsValueEl.textContent=`${userStats.pontosMes||0} pts`;
-        const now=new Date();const monthName=now.toLocaleString('pt-BR',{month:'long'});const year=now.getFullYear();
-        monthlyPointsLabelEl.textContent=`${monthName.charAt(0).toUpperCase()+monthName.slice(1)}/${year}`;
-      }
-    }
-
-    function renderMeuDia(){
-      const prioridades=document.getElementById('prioridades-hoje-list'); prioridades.innerHTML='';
-      const hojeStr=getLocalDate();
-      const tarefasHoje=allTarefas.filter(t=>!t.concluida && t.dataEntrega===hojeStr);
-      const revisoesHoje=allConteudos.filter(c=>getStatusRevisao(c).status==='urgente');
-      [...tarefasHoje,...revisoesHoje].forEach(item=>{
-        const isTarefa=!!item.dataEntrega;
-        prioridades.innerHTML+=`<div class="border-l-4 ${isTarefa?'border-red-500':'border-red-500'} bg-slate-100 p-3 rounded-md">${isTarefa?'<b>Tarefa:</b>':'<b>Revisão:</b>'} ${item.descricao}</div>`;
-      });
-      if(!prioridades.innerHTML) prioridades.innerHTML='<p class="text-slate-500">Nenhuma prioridade para hoje. Que tal relaxar ou adiantar algo?</p>';
-
-      const metas=document.getElementById('metas-semana-list');
-      const metaT=userGoals.tarefas||0, metaR=userGoals.revisoes||0;
-      const progT=userStats.tarefasSemana||0, progR=userStats.revisoesSemana||0;
-      const pT=metaT>0?Math.min(100,(progT/metaT)*100):0, pR=metaR>0?Math.min(100,(progR/metaR)*100):0;
-      metas.innerHTML=`
-        <div><div class="flex justify-between font-semibold"><p>Tarefas Concluídas</p><p>${progT} / ${metaT}</p></div>
-          <div class="w-full bg-slate-200 rounded-full h-2.5"><div class="bg-blue-600 h-2.5 rounded-full" style="width:${pT}%"></div></div></div>
-        <div><div class="flex justify-between font-semibold"><p>Revisões Feitas</p><p>${progR} / ${metaR}</p></div>
-          <div class="w-full bg-slate-200 rounded-full h-2.5"><div class="bg-green-600 h-2.5 rounded-full" style="width:${pR}%"></div></div></div>`;
-      const conquistas=document.getElementById('conquistas-list'); conquistas.innerHTML='';
-      const conquistasDef={
-        PRIMEIRA_TAREFA:{nome:"Primeiro Passo",desc:"Complete sua primeira tarefa.",icon:"👟",req:s=>s.tarefasConcluidas>=1},
-        PRIMEIRA_REVISAO:{nome:"Mente Fresca",desc:"Faça sua primeira revisão.",icon:"🧠",req:s=>s.revisoesFeitas>=1},
-        DEZ_TAREFAS:{nome:"Organização em Pessoa",desc:"Complete 10 tarefas.",icon:"📚",req:s=>s.tarefasConcluidas>=10},
-        DEZ_REVISOES:{nome:"Memória de Elefante",desc:"Faça 10 revisões.",icon:"🐘",req:s=>s.revisoesFeitas>=10},
-        MARATONISTA:{nome:"Maratonista",desc:"Complete 5 tarefas em um dia.",icon:"🏃‍♀️",req:s=>s.tarefasHoje>=5},
-        FOCO_TOTAL:{nome:"Foco Total",desc:"Complete um ciclo Pomodoro.",icon:"🎯",req:s=>s.pomodorosCompletos>=1},
-      };
-      for(const key in conquistasDef){
-        const c=conquistasDef[key]; const unlocked=userStats.conquistas && userStats.conquistas[key];
-        conquistas.innerHTML+=`<div class="text-center p-2 rounded-lg ${unlocked?'bg-amber-100':'bg-slate-100 opacity-50'}" title="${c.nome}: ${c.desc}">
-          <div class="text-4xl">${c.icon}</div><p class="text-xs font-semibold mt-1 truncate">${c.nome}</p></div>`;
-      }
-    }
-
-    function applyAndRenderTarefasFilters(){
-      const d=filtroTarefaDisciplina.value, data=filtroTarefaData.value, q=filtroTarefaPesquisa.value.toLowerCase();
-      let list=allTarefas; if(d) list=list.filter(t=>t.disciplina===d); if(data) list=list.filter(t=>t.dataEntrega===data);
-      if(q) list=list.filter(t=>t.descricao.toLowerCase().includes(q)); renderTarefas(list);
-    }
-    function renderTarefas(tarefas){
-      tarefasList.innerHTML=''; const pend=tarefas.filter(t=>!t.concluida).sort((a,b)=>new Date(a.dataEntrega)-new Date(b.dataEntrega));
-      const conc=tarefas.filter(t=>t.concluida).sort((a,b)=>new Date(b.dataEntrega)-new Date(a.dataEntrega));
-      if(!tarefas.length){tarefasList.innerHTML=`<div class="text-center p-8 bg-white rounded-lg shadow"><p class="text-slate-500">Nenhuma tarefa encontrada.</p></div>`;return;}
-      if(pend.length){tarefasList.innerHTML+=`<h3 class="text-xl font-semibold text-slate-700 mb-2 mt-4">Pendentes</h3>`;
-        pend.forEach(t=>{
-          const info=getStatusTarefa(t); const data=new Date(t.dataEntrega+'T03:00:00Z').toLocaleDateString('pt-BR');
-          tarefasList.innerHTML+=`
-            <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-${info.color}-500">
-              <div class="flex flex-col sm:flex-row justify-between">
-                <div class="flex-1 mb-4 sm:mb-0">
-                  <div class="flex items-center mb-2 flex-wrap gap-x-3">
-                    <span class="bg-${info.color}-100 text-${info.color}-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${t.disciplina}</span>
-                    <span class="text-sm font-medium text-slate-600">Entrega: ${data}</span>
-                    <span class="font-bold text-sm text-${info.color}-800">${info.text}</span>
-                  </div>
-                  <h4 class="text-lg font-bold text-slate-800">${t.descricao}</h4>
-                  ${t.fontes?`<p class="text-sm text-slate-500 mt-1 whitespace-pre-wrap"><b>Fontes:</b> ${t.fontes}</p>`:''}
+    <div id="app-container" class="container mx-auto p-4 md:p-8 max-w-7xl hidden">
+        <header class="mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex-grow">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-blue-600">Meu Diário de Estudos</h1>
+                    <div id="user-info" class="flex items-center gap-3 mt-2">
+                        <!-- User info will be injected here -->
+                    </div>
                 </div>
-                <div class="flex items-center space-x-2 justify-end">
-                  <button data-id="${t.id}" class="editar-tarefa-btn bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow">✏️</button>
-                  <button data-id="${t.id}" class="concluir-btn bg-green-500 text-white p-2 rounded-full hover:bg-green-600 shadow">✔️</button>
-                  <button data-id="${t.id}" class="deletar-tarefa-btn bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow">🗑️</button>
+                <div class="flex-shrink-0">
+                    <div class="flex items-center gap-2 md:gap-3 bg-white p-2 rounded-xl shadow-lg">
+                        <div id="user-points-monthly-display" class="text-center px-2">
+                            <div class="text-sm font-bold text-slate-600" id="monthly-points-label">Mês/Ano</div>
+                            <div class="text-xl font-bold text-blue-600" id="monthly-points-value">0 pts</div>
+                        </div>
+                        <div class="border-l h-10 border-slate-200"></div>
+                        <div id="user-points-display" class="text-center px-2">
+                            <div class="text-sm font-bold text-slate-600">Total</div>
+                            <div class="text-xl font-bold text-amber-500" id="total-points-value">⚡ 0</div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>`;
+            </div>
+             <div id="admin-view-banner" class="hidden mt-4 bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded-md" role="alert">
+                <p class="font-bold">Modo de Gestão</p>
+                <p>Você está visualizando os dados de: <strong id="viewing-user-name"></strong>. <button id="exit-admin-view" class="font-bold underline">Sair da visão</button></p>
+                <select id="user-selector" class="mt-2 border-slate-300 rounded-lg"></select>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="mb-6 border-b border-slate-200">
+            <nav class="flex space-x-2 md:space-x-4 flex-wrap" aria-label="Tabs">
+                <button id="tab-meu-dia" class="tab active text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 h-5 w-5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    Meu Dia
+                </button>
+                <button id="tab-tarefas" class="tab text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 h-5 w-5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                    Tarefas
+                </button>
+                <button id="tab-revisoes" class="tab text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 h-5 w-5"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    Revisões
+                </button>
+                <button id="tab-horario" class="tab text-lg font-medium py-3 px-1 border-b-2 border-transparent hover:border-blue-500 hover:text-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block mr-2 h-5 w-5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Horário
+                </button>
+            </nav>
+        </div>
+        
+        <main>
+            <!-- Meu Dia Content -->
+            <div id="content-meu-dia" class="tab-content hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4">Prioridades de Hoje</h2>
+                        <div id="prioridades-hoje-list" class="space-y-3"></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                         <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-2xl font-bold text-slate-800">Metas da Semana</h2>
+                            <button id="edit-goals-btn" class="text-blue-500 hover:text-blue-700 font-semibold">Editar Metas</button>
+                        </div>
+                        <div id="metas-semana-list" class="space-y-4"></div>
+                    </div>
+                </div>
+                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">Minhas Conquistas</h2>
+                    <div id="conquistas-list" class="grid grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+            <!-- Tarefas Content -->
+            <div id="content-tarefas" class="tab-content hidden">
+                 <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+                     <div id="filtros-tarefas-container" class="flex items-center gap-4 flex-wrap flex-1 min-w-[200px]">
+                        <select id="filtro-tarefa-disciplina" class="border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"></select>
+                         <input type="date" id="filtro-tarefa-data" class="border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <input type="search" id="filtro-tarefa-pesquisa" placeholder="Pesquisar tarefa..." class="border-slate-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 flex-1">
+                    </div>
+                    <button id="open-tarefa-modal" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-transform transform hover:scale-105">+ Adicionar Tarefa</button>
+                </div>
+                <div id="tarefas-list" class="space-y-4"></div>
+            </div>
+
+            <!-- Revisões Content -->
+            <div id="content-revisoes" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+                     <div id="filtros-container" class="flex items-center gap-4 flex-wrap flex-1 min-w-[200px]">
+                        <select id="filtro-disciplina" class="border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500"></select>
+                        <select id="filtro-status" class="border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500">
+                            <option value="">Todos os Status</option>
+                            <option value="urgente">Urgente</option>
+                            <option value="atencao">Atenção</option>
+                            <option value="revisado">Revisado</option>
+                        </select>
+                        <input type="search" id="filtro-pesquisa" placeholder="Pesquisar conteúdo..." class="border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 flex-1">
+                    </div>
+                    <button id="open-conteudo-modal" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition-transform transform hover:scale-105">+ Adicionar Conteúdo</button>
+                </div>
+                <div id="conteudos-list" class="space-y-4"></div>
+            </div>
+
+            <!-- Horário Content -->
+            <div id="content-horario" class="tab-content hidden">
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-slate-800">Meu Horário de Aulas</h2>
+                        <button id="save-horario-btn" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700">Salvar Horário</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="horario-table" class="w-full text-center border-collapse"></table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="tarefa-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
+    <div id="conteudo-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
+    <div id="senha-modal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4"></div>
+    <div id="admin-senha-modal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4"></div>
+    <div id="metas-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
+    <div id="profile-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center p-4"></div>
+    <div id="conquista-unlocked-modal" class="modal fixed inset-0 bg-black bg-opacity-70 items-center justify-center p-4 z-50"></div>
+
+    <!-- Pomodoro Timer -->
+    <div id="pomodoro-timer" class="pomodoro-timer fixed bottom-4 right-4 bg-white shadow-2xl flex items-center justify-center">
+        <button id="pomodoro-toggle-btn" class="absolute z-10 text-slate-600 hover:text-blue-600 rounded-full flex items-center justify-center">
+             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+        </button>
+        <div class="pomodoro-content p-4 w-64 relative">
+            <button id="pomodoro-minimize-btn" class="absolute top-2 right-2 text-slate-400 hover:text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="flex justify-between items-center">
+                <div id="pomodoro-display" class="text-3xl font-bold text-slate-700">25:00</div>
+                <div class="flex gap-2">
+                    <button id="pomodoro-start-pause" class="bg-green-500 text-white p-2 rounded-full h-10 w-10"></button>
+                    <button id="pomodoro-reset" class="bg-slate-300 text-slate-600 p-2 rounded-full h-10 w-10"></button>
+                </div>
+            </div>
+            <div id="pomodoro-status" class="text-center font-semibold text-green-600 mt-2">Hora de Focar!</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importações do Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, getDoc, Timestamp, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configuração e Inicialização ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyDYMWo_itEipB4QzPRlcS0t9EPqffBFBS0",
+            authDomain: "diario-de-estudos-gabrielly.firebaseapp.com",
+            projectId: "diario-de-estudos-gabrielly",
+            storageBucket: "diario-de-estudos-gabrielly.appspot.com",
+            messagingSenderId: "647763105939",
+            appId: "1:647763105939:web:87ff53a56f487d891f5566"
+        };
+
+        let app, auth, db, userId, viewedUserId;
+        let unsubscribes = [];
+        let allTarefas = [], allConteudos = [], userStats = {}, userGoals = {}, horarioData = {}, userProfile = {};
+        
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) { console.error("Erro ao inicializar Firebase:", e); }
+
+        // --- Constantes e Elementos do DOM ---
+        const disciplinas = ['Arte', 'Ciências', 'Ed. Física', 'Ens. Religioso', 'Geografia', 'História', 'Inglês', 'Matemática', 'Português', 'Redação'].sort();
+        const REVISAO_INTERVALOS = [1, 3, 7, 14, 30];
+        const SENHA_MESTRA = "2R@bison8";
+        const ADMIN_SENHA = "Rob282725";
+        const DIAS_SEMANA = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+        const HORARIOS_AULA = ["1º", "2º", "3º", "4º", "5º"];
+        
+        let pendingAction = null, pendingDocId = null;
+
+        const conquistasDef = {
+            PRIMEIRA_TAREFA: { nome: "Primeiro Passo", desc: "Complete sua primeira tarefa.", icon: "👟", req: (stats) => stats.tarefasConcluidas >= 1 },
+            PRIMEIRA_REVISAO: { nome: "Mente Fresca", desc: "Faça sua primeira revisão.", icon: "🧠", req: (stats) => stats.revisoesFeitas >= 1 },
+            DEZ_TAREFAS: { nome: "Organização em Pessoa", desc: "Complete 10 tarefas.", icon: "📚", req: (stats) => stats.tarefasConcluidas >= 10 },
+            DEZ_REVISOES: { nome: "Memória de Elefante", desc: "Faça 10 revisões.", icon: "🐘", req: (stats) => stats.revisoesFeitas >= 10 },
+            MARATONISTA: { nome: "Maratonista", desc: "Complete 5 tarefas em um dia.", icon: "🏃‍♀️", req: (stats) => stats.tarefasHoje >= 5 },
+            FOCO_TOTAL: { nome: "Foco Total", desc: "Complete um ciclo Pomodoro.", icon: "🎯", req: (stats) => stats.pomodorosCompletos >= 1 },
+        };
+
+        const loginContainer = document.getElementById('login-container');
+        const appContainer = document.getElementById('app-container');
+        const userInfo = document.getElementById('user-info');
+        const allTabs = {
+            'meu-dia': document.getElementById('tab-meu-dia'),
+            'tarefas': document.getElementById('tab-tarefas'),
+            'revisoes': document.getElementById('tab-revisoes'),
+            'horario': document.getElementById('tab-horario'),
+        };
+        const allContents = {
+            'meu-dia': document.getElementById('content-meu-dia'),
+            'tarefas': document.getElementById('content-tarefas'),
+            'revisoes': document.getElementById('content-revisoes'),
+            'horario': document.getElementById('content-horario'),
+        };
+        const tarefasList = document.getElementById('tarefas-list');
+        const conteudosList = document.getElementById('conteudos-list');
+        const filtroTarefaDisciplina = document.getElementById('filtro-tarefa-disciplina');
+        const filtroTarefaData = document.getElementById('filtro-tarefa-data');
+        const filtroTarefaPesquisa = document.getElementById('filtro-tarefa-pesquisa');
+        const filtroDisciplina = document.getElementById('filtro-disciplina');
+        const filtroStatus = document.getElementById('filtro-status');
+        const filtroPesquisa = document.getElementById('filtro-pesquisa');
+
+        // --- Funções de Renderização de Modais e Componentes ---
+        function renderAllModals() {
+            document.getElementById('tarefa-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-lg relative animate-fade-in">
+                    <button type="button" id="close-tarefa-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+                    <h2 id="tarefa-modal-title" class="text-2xl font-bold mb-6 text-blue-600"></h2>
+                    <form id="tarefa-form" class="space-y-4">
+                        <input type="hidden" id="tarefa-id">
+                        <div><label for="tarefa-disciplina" class="font-medium text-slate-700">Disciplina</label><select id="tarefa-disciplina" required class="w-full border-slate-300 rounded-lg mt-1"></select></div>
+                        <div><label for="tarefa-descricao" class="font-medium text-slate-700">Descrição</label><textarea id="tarefa-descricao" rows="3" required class="w-full border-slate-300 rounded-lg mt-1"></textarea></div>
+                        <div><label for="tarefa-entrega" class="font-medium text-slate-700">Data de Entrega</label><input type="date" id="tarefa-entrega" required class="w-full border-slate-300 rounded-lg mt-1"></div>
+                        <div><label for="tarefa-fontes" class="font-medium text-slate-700">Fontes/Links</label><textarea id="tarefa-fontes" rows="2" class="w-full border-slate-300 rounded-lg mt-1"></textarea></div>
+                        <div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-tarefa-btn" class="bg-white text-slate-700 font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-slate-50 border">Cancelar</button><button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700">Salvar</button></div>
+                    </form>
+                </div>`;
+            document.getElementById('conteudo-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-lg relative">
+                    <button type="button" id="close-conteudo-modal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
+                    <h2 id="conteudo-modal-title" class="text-2xl font-bold mb-6 text-green-600"></h2>
+                    <form id="conteudo-form" class="space-y-4">
+                        <input type="hidden" id="conteudo-id">
+                        <div><label for="conteudo-disciplina" class="font-medium text-slate-700">Disciplina</label><select id="conteudo-disciplina" required class="w-full border-slate-300 rounded-lg mt-1"></select></div>
+                        <div><label for="conteudo-descricao" class="font-medium text-slate-700">Conteúdo</label><textarea id="conteudo-descricao" rows="3" required class="w-full border-slate-300 rounded-lg mt-1"></textarea></div>
+                        <div><label for="conteudo-data" class="font-medium text-slate-700">Data da Aula</label><input type="date" id="conteudo-data" required class="w-full border-slate-300 rounded-lg mt-1"></div>
+                        <div><label class="font-medium text-slate-700">Tópicos</label><div id="conteudo-topicos-container" class="space-y-2 mt-1"></div></div>
+                        <div class="pt-4 flex justify-end space-x-3"><button type="button" id="cancel-conteudo-btn" class="bg-white text-slate-700 font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-slate-50 border">Cancelar</button><button type="submit" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-green-700">Salvar</button></div>
+                    </form>
+                </div>`;
+            document.getElementById('senha-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-sm relative">
+                    <h2 class="text-xl font-bold mb-4">Ação Protegida</h2><p class="text-slate-600 mb-4">Insira a senha.</p>
+                    <form id="senha-form">
+                        <input type="password" id="senha-input" class="w-full border-slate-300 rounded-lg" required><p id="senha-error" class="text-red-500 text-sm mt-1 h-4"></p>
+                        <div class="mt-6 flex justify-end space-x-3"><button type="button" id="cancel-senha-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button><button type="submit" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Confirmar</button></div>
+                    </form>
+                </div>`;
+            document.getElementById('metas-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-md relative">
+                    <h2 class="text-xl font-bold mb-4">Editar Metas da Semana</h2>
+                    <form id="metas-form" class="space-y-4">
+                        <div><label for="meta-tarefas" class="block">Nº de tarefas a completar</label><input type="number" id="meta-tarefas" min="1" class="w-full border-slate-300 rounded-lg" required></div>
+                        <div><label for="meta-revisoes" class="block">Nº de revisões a fazer</label><input type="number" id="meta-revisoes" min="1" class="w-full border-slate-300 rounded-lg" required></div>
+                        <div class="mt-6 flex justify-end space-x-3"><button type="button" id="cancel-metas-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button><button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Salvar Metas</button></div>
+                    </form>
+                </div>`;
+            document.getElementById('profile-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-md relative">
+                    <h2 class="text-xl font-bold mb-4">Editar Perfil</h2>
+                    <form id="profile-form" class="space-y-4">
+                        <div>
+                            <label for="profile-name" class="block font-medium text-slate-700">Nome de Exibição</label>
+                            <input type="text" id="profile-name" class="w-full border-slate-300 rounded-lg mt-1" required>
+                        </div>
+                        <div>
+                            <label for="profile-photo" class="block font-medium text-slate-700">URL da Foto</label>
+                            <input type="url" id="profile-photo" class="w-full border-slate-300 rounded-lg mt-1" placeholder="https://exemplo.com/sua-foto.jpg">
+                            <p class="text-xs text-slate-500 mt-1">Cole o link de uma imagem da internet.</p>
+                        </div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button type="button" id="cancel-profile-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button>
+                            <button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Salvar</button>
+                        </div>
+                    </form>
+                </div>`;
+             document.getElementById('conquista-unlocked-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md text-center">
+                    <h2 class="text-2xl font-bold text-amber-500">CONQUISTA DESBLOQUEADA!</h2>
+                    <div id="conquista-icon" class="text-7xl my-4"></div>
+                    <h3 id="conquista-nome" class="text-xl font-bold text-slate-800"></h3>
+                    <p id="conquista-desc" class="text-slate-600"></p>
+                    <button id="close-conquista-modal" class="mt-6 bg-amber-500 text-white font-semibold py-2 px-6 rounded-lg">Legal!</button>
+                </div>`;
+            document.getElementById('admin-senha-modal').innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-sm relative">
+                    <h2 class="text-xl font-bold mb-4">Acesso do Gestor</h2><p class="text-slate-600 mb-4">Insira a senha de gestão.</p>
+                    <form id="admin-senha-form">
+                        <input type="password" id="admin-senha-input" class="w-full border-slate-300 rounded-lg" required><p id="admin-senha-error" class="text-red-500 text-sm mt-1 h-4"></p>
+                        <div class="mt-6 flex justify-end space-x-3"><button type="button" id="cancel-admin-senha-btn" class="bg-white text-slate-700 font-semibold py-2 px-4 rounded-lg shadow-md border">Cancelar</button><button type="submit" class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">Entrar</button></div>
+                    </form>
+                </div>`;
+        }
+
+        // --- Funções Auxiliares ---
+        function getLocalDate() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        }
+
+        function populateSelects() {
+            const formSelects = document.querySelectorAll('select#tarefa-disciplina, select#conteudo-disciplina');
+            formSelects.forEach(select => {
+                select.innerHTML = '';
+                disciplinas.forEach(d => select.innerHTML += `<option value="${d}">${d}</option>`);
+            });
+
+            const filterSelects = document.querySelectorAll('select#filtro-disciplina, select#filtro-tarefa-disciplina');
+            filterSelects.forEach(select => {
+                select.innerHTML = '<option value="">Todas as Disciplinas</option>';
+                disciplinas.forEach(d => select.innerHTML += `<option value="${d}">${d}</option>`);
+            });
+        }
+        
+        function toggleModal(modalId, show) {
+            const modal = document.getElementById(modalId);
+            if (show) modal.classList.add('active');
+            else modal.classList.remove('active');
+        }
+
+        // --- Lógica de Abas e Status ---
+        function switchTab(tabId) {
+            Object.keys(allTabs).forEach(key => {
+                allTabs[key].classList.remove('active');
+                allContents[key].classList.add('hidden');
+            });
+            allTabs[tabId].classList.add('active');
+            allContents[tabId].classList.remove('hidden');
+        }
+        
+        function getStatusTarefa(tarefa) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const dataEntrega = new Date(tarefa.dataEntrega + 'T00:00:00');
+            dataEntrega.setHours(0, 0, 0, 0);
+            const diffTime = dataEntrega.getTime() - hoje.getTime();
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) return { status: 'vencido', text: `Venceu há ${-diffDays} dia(s)`, color: 'red' };
+            if (diffDays === 0) return { status: 'atencao_alta', text: 'Entrega hoje!', color: 'red' };
+            if (diffDays <= 3) return { status: 'atencao', text: `Entrega em ${diffDays} dia(s)`, color: 'yellow' };
+            return { status: 'folgado', text: `Prazo tranquilo`, color: 'blue' };
+        }
+
+        function getStatusRevisao(conteudo) {
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0);
+            const ultimaRevisao = new Date(conteudo.ultimaRevisao.seconds * 1000);
+            const proximoIntervalo = REVISAO_INTERVALOS[conteudo.estagioRevisao] || REVISAO_INTERVALOS[REVISAO_INTERVALOS.length - 1];
+            const proximaRevisao = new Date(ultimaRevisao);
+            proximaRevisao.setDate(proximaRevisao.getDate() + proximoIntervalo);
+            proximaRevisao.setHours(0, 0, 0, 0);
+            const diffTime = proximaRevisao - hoje;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays <= 0) return { status: 'urgente', text: 'Revisar agora!', color: 'red', proxima: proximaRevisao };
+            if (diffDays <= 2) return { status: 'atencao', text: `Revisar em ${diffDays} dia(s)`, color: 'yellow', proxima: proximaRevisao };
+            return { status: 'revisado', text: `Próxima revisão em ${diffDays} dias`, color: 'green', proxima: proximaRevisao };
+        }
+
+
+        // --- Funções de Renderização Principal ---
+        function renderUserInfo(user) {
+            if (!user) {
+                userInfo.innerHTML = '';
+                return;
+            }
+            
+            const displayName = userProfile.displayName || user.displayName || user.email || "Usuário";
+            const photoURL = userProfile.photoURL || user.photoURL;
+            
+            let profileImageHtml;
+            if (photoURL) {
+                profileImageHtml = `<img src="${photoURL}" alt="Foto do perfil" class="w-10 h-10 rounded-full object-cover">`;
+            } else {
+                const initial = displayName.charAt(0).toUpperCase();
+                profileImageHtml = `
+                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-xl">
+                        ${initial}
+                    </div>
+                `;
+            }
+
+            userInfo.innerHTML = `
+                ${profileImageHtml}
+                <div class="text-sm">
+                    <p class="font-bold text-slate-700">${displayName}</p>
+                    <div class="flex items-center gap-3">
+                         <button id="logout-btn" class="text-red-500 hover:underline">Sair</button>
+                         <button id="edit-profile-btn" class="text-blue-500 hover:underline">Editar</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            document.getElementById('edit-profile-btn').addEventListener('click', openProfileModal);
+        }
+        
+        function renderAll() {
+            renderUserInfo(auth.currentUser);
+            renderMeuDia();
+            applyAndRenderTarefasFilters();
+            applyAndRenderConteudosFilters();
+            renderHorario();
+            
+            const totalPointsEl = document.getElementById('total-points-value');
+            if (totalPointsEl) {
+                totalPointsEl.innerHTML = `⚡ ${userStats.pontos || 0}`;
+            }
+            
+            const monthlyPointsValueEl = document.getElementById('monthly-points-value');
+            const monthlyPointsLabelEl = document.getElementById('monthly-points-label');
+
+            if (monthlyPointsValueEl && monthlyPointsLabelEl) {
+                monthlyPointsValueEl.textContent = `${userStats.pontosMes || 0} pts`;
+                const now = new Date();
+                const monthName = now.toLocaleString('pt-BR', { month: 'long' });
+                const year = now.getFullYear();
+                const formattedMonth = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+                monthlyPointsLabelEl.textContent = `${formattedMonth}/${year}`;
+            }
+        }
+        
+        function renderMeuDia() {
+            const prioridadesList = document.getElementById('prioridades-hoje-list');
+            prioridadesList.innerHTML = '';
+            const hojeStr = getLocalDate();
+            const tarefasHoje = allTarefas.filter(t => !t.concluida && t.dataEntrega === hojeStr);
+            const revisoesHoje = allConteudos.filter(c => getStatusRevisao(c).status === 'urgente');
+            
+            [...tarefasHoje, ...revisoesHoje].forEach(item => {
+                const isTarefa = !!item.dataEntrega;
+                prioridadesList.innerHTML += `<div class="border-l-4 ${isTarefa ? 'border-red-500' : 'border-red-500'} bg-slate-100 p-3 rounded-md">${isTarefa ? '<b>Tarefa:</b>' : '<b>Revisão:</b>'} ${item.descricao}</div>`;
+            });
+            if (prioridadesList.innerHTML === '') prioridadesList.innerHTML = '<p class="text-slate-500">Nenhuma prioridade para hoje. Que tal relaxar ou adiantar algo?</p>';
+
+            const metasContainer = document.getElementById('metas-semana-list');
+            const metaTarefas = userGoals.tarefas || 0;
+            const metaRevisoes = userGoals.revisoes || 0;
+            const tarefasProg = userStats.tarefasSemana || 0;
+            const revisoesProg = userStats.revisoesSemana || 0;
+            const percTarefas = metaTarefas > 0 ? Math.min(100, (tarefasProg / metaTarefas) * 100) : 0;
+            const percRevisoes = metaRevisoes > 0 ? Math.min(100, (revisoesProg / metaRevisoes) * 100) : 0;
+            metasContainer.innerHTML = `
+                <div>
+                    <div class="flex justify-between font-semibold"><p>Tarefas Concluídas</p><p>${tarefasProg} / ${metaTarefas}</p></div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5"><div class="bg-blue-600 h-2.5 rounded-full" style="width: ${percTarefas}%"></div></div>
+                </div>
+                <div>
+                    <div class="flex justify-between font-semibold"><p>Revisões Feitas</p><p>${revisoesProg} / ${metaRevisoes}</p></div>
+                    <div class="w-full bg-slate-200 rounded-full h-2.5"><div class="bg-green-600 h-2.5 rounded-full" style="width: ${percRevisoes}%"></div></div>
+                </div>`;
+            
+            const conquistasContainer = document.getElementById('conquistas-list');
+            conquistasContainer.innerHTML = '';
+            for (const key in conquistasDef) {
+                const conquista = conquistasDef[key];
+                const unlocked = userStats.conquistas && userStats.conquistas[key];
+                conquistasContainer.innerHTML += `
+                    <div class="text-center p-2 rounded-lg ${unlocked ? 'bg-amber-100' : 'bg-slate-100 opacity-50'}" title="${conquista.nome}: ${conquista.desc}">
+                        <div class="text-4xl">${conquista.icon}</div>
+                        <p class="text-xs font-semibold mt-1 truncate">${conquista.nome}</p>
+                    </div>`;
+            }
+        }
+
+        function applyAndRenderTarefasFilters() {
+            const disciplina = filtroTarefaDisciplina.value;
+            const data = filtroTarefaData.value;
+            const pesquisa = filtroTarefaPesquisa.value.toLowerCase();
+            let filteredTarefas = allTarefas;
+            if (disciplina) filteredTarefas = filteredTarefas.filter(t => t.disciplina === disciplina);
+            if (data) filteredTarefas = filteredTarefas.filter(t => t.dataEntrega === data);
+            if (pesquisa) filteredTarefas = filteredTarefas.filter(t => t.descricao.toLowerCase().includes(pesquisa));
+            renderTarefas(filteredTarefas);
+        }
+
+        function renderTarefas(tarefas) {
+            tarefasList.innerHTML = '';
+            const pendentes = tarefas.filter(t => !t.concluida).sort((a,b) => new Date(a.dataEntrega) - new Date(b.dataEntrega));
+            const concluidas = tarefas.filter(t => t.concluida).sort((a,b) => new Date(b.dataEntrega) - new Date(a.dataEntrega));
+            if (tarefas.length === 0) {
+                 tarefasList.innerHTML = `<div class="text-center p-8 bg-white rounded-lg shadow"><p class="text-slate-500">Nenhuma tarefa encontrada.</p></div>`;
+                 return;
+            }
+            if(pendentes.length > 0) {
+                tarefasList.innerHTML += `<h3 class="text-xl font-semibold text-slate-700 mb-2 mt-4">Pendentes</h3>`;
+                pendentes.forEach(tarefa => {
+                    const info = getStatusTarefa(tarefa);
+                    const data = new Date(tarefa.dataEntrega + 'T03:00:00Z').toLocaleDateString('pt-BR');
+                    tarefasList.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-${info.color}-500">
+                        <div class="flex flex-col sm:flex-row justify-between">
+                            <div class="flex-1 mb-4 sm:mb-0">
+                                <div class="flex items-center mb-2 flex-wrap gap-x-3">
+                                    <span class="bg-${info.color}-100 text-${info.color}-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">${tarefa.disciplina}</span>
+                                    <span class="text-sm font-medium text-slate-600">Entrega: ${data}</span>
+                                    <span class="font-bold text-sm text-${info.color}-800">${info.text}</span>
+                                </div>
+                                <h4 class="text-lg font-bold text-slate-800">${tarefa.descricao}</h4>
+                                ${tarefa.fontes ? `<p class="text-sm text-slate-500 mt-1 whitespace-pre-wrap"><b>Fontes:</b> ${tarefa.fontes}</p>` : ''}
+                            </div>
+                            <div class="flex items-center space-x-2 justify-end">
+                                <button data-id="${tarefa.id}" class="editar-tarefa-btn bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                                <button data-id="${tarefa.id}" class="concluir-btn bg-green-500 text-white p-2 rounded-full hover:bg-green-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></button>
+                                <button data-id="${tarefa.id}" class="deletar-tarefa-btn bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            }
+            if(concluidas.length > 0) {
+                 tarefasList.innerHTML += `<h3 class="text-xl font-semibold text-slate-700 mb-2 mt-8 opacity-70">Concluídas</h3>`;
+                 concluidas.forEach(tarefa => {
+                    tarefasList.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-slate-400 opacity-60">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1"><span class="text-sm text-slate-500">${tarefa.disciplina}</span><h4 class="text-lg font-bold text-slate-600 line-through">${tarefa.descricao}</h4></div>
+                            <button data-id="${tarefa.id}" class="deletar-tarefa-btn text-slate-400 hover:text-red-500 p-2 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                        </div>
+                    </div>`;
+                 });
+            }
+        }
+        
+        function applyAndRenderConteudosFilters() {
+            const disciplina = filtroDisciplina.value;
+            const status = filtroStatus.value;
+            const pesquisa = filtroPesquisa.value.toLowerCase();
+            let filtered = allConteudos;
+            if (disciplina) filtered = filtered.filter(c => c.disciplina === disciplina);
+            if (status) filtered = filtered.filter(c => getStatusRevisao(c).status === status);
+            if (pesquisa) filtered = filtered.filter(c => c.descricao.toLowerCase().includes(pesquisa) || (c.topicos && c.topicos.some(t => t.toLowerCase().includes(pesquisa))));
+            renderConteudos(filtered);
+        }
+
+        function renderConteudos(conteudos) {
+            conteudosList.innerHTML = '';
+            if (conteudos.length === 0) {
+                 conteudosList.innerHTML = `<div class="text-center p-8 bg-white rounded-lg shadow"><p class="text-slate-500">Nenhum conteúdo encontrado.</p></div>`;
+                 return;
+            }
+            conteudos.sort((a, b) => getStatusRevisao(a).proxima - getStatusRevisao(b).proxima).forEach(c => {
+                const info = getStatusRevisao(c);
+                const data = new Date(c.dataAula.seconds * 1000).toLocaleDateString('pt-BR');
+                let topicosHtml = '';
+                if (c.topicos && Array.isArray(c.topicos) && c.topicos.length > 0) {
+                    topicosHtml = `<div class="text-sm text-slate-600 mt-2"><b>Tópicos:</b><ul class="list-disc list-inside ml-2">${c.topicos.map(t => `<li>${t}</li>`).join('')}</ul></div>`;
+                }
+                conteudosList.innerHTML += `
+                <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-${info.color}-500">
+                    <div class="flex flex-col sm:flex-row justify-between">
+                        <div class="flex-1 mb-4 sm:mb-0">
+                            <div class="flex items-center mb-2 flex-wrap">
+                                <span class="bg-${info.color}-100 text-${info.color}-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full">${c.disciplina}</span>
+                                <span class="text-sm font-medium text-slate-600">Aula de: ${data}</span>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800">${c.descricao}</h4>
+                            ${topicosHtml}
+                        </div>
+                        <div class="flex flex-col items-end justify-center text-right space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <button data-id="${c.id}" class="editar-conteudo-btn bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                                <button data-id="${c.id}" class="deletar-conteudo-btn bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                            </div>
+                            <span class="font-bold text-lg text-${info.color}-800">${info.text}</span>
+                            <button data-id="${c.id}" class="revisar-btn bg-${info.color}-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-${info.color}-600">Já revisei!</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+        
+        function renderHorario() {
+            const table = document.getElementById('horario-table');
+            let html = `<thead><tr><th class="p-2 border">Horário</th>${DIAS_SEMANA.map(dia => `<th class="p-2 border">${dia}</th>`).join('')}</tr></thead><tbody>`;
+            for (const horario of HORARIOS_AULA) {
+                html += `<tr><td class="p-2 border font-bold">${horario}</td>`;
+                for (const dia of DIAS_SEMANA) {
+                    const savedDisciplina = horarioData[dia] ? horarioData[dia][horario] || '' : '';
+                    html += `<td class="p-1 border"><select data-dia="${dia}" data-horario="${horario}" class="w-full border-0 focus:ring-0 text-center bg-transparent"><option value="">-</option>${disciplinas.map(d => `<option value="${d}" ${savedDisciplina === d ? 'selected' : ''}>${d}</option>`).join('')}</select></td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody>`;
+            table.innerHTML = html;
+        }
+
+        // --- Lógica de Gamificação ---
+        async function addPoints(type) {
+            if (!userId) return;
+
+            const now = new Date();
+            const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            if (userStats.ultimoMes !== currentMonthStr) {
+                userStats.pontosMes = 0;
+                userStats.ultimoMes = currentMonthStr;
+            }
+
+            const todayStr = getLocalDate().slice(0, 10);
+            if(userStats.lastDay !== todayStr) {
+                userStats.tarefasHoje = 0;
+                userStats.lastDay = todayStr;
+            }
+            const dayOfWeek = now.getDay(); // Sunday=0, Monday=1
+            const firstDayOfWeek = new Date(now);
+            firstDayOfWeek.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+            firstDayOfWeek.setHours(0,0,0,0);
+
+            if(!userStats.lastWeek || new Date(userStats.lastWeek) < firstDayOfWeek) {
+                 userStats.tarefasSemana = 0;
+                 userStats.revisoesSemana = 0;
+                 userStats.lastWeek = firstDayOfWeek.toISOString().slice(0,10);
+            }
+
+            if(type === 'tarefa') {
+                userStats.pontos = (userStats.pontos || 0) + 10;
+                userStats.pontosMes = (userStats.pontosMes || 0) + 10;
+                userStats.tarefasConcluidas = (userStats.tarefasConcluidas || 0) + 1;
+                userStats.tarefasHoje = (userStats.tarefasHoje || 0) + 1;
+                userStats.tarefasSemana = (userStats.tarefasSemana || 0) + 1;
+            } else if (type === 'revisao') {
+                userStats.pontos = (userStats.pontos || 0) + 5;
+                userStats.pontosMes = (userStats.pontosMes || 0) + 5;
+                userStats.revisoesFeitas = (userStats.revisoesFeitas || 0) + 1;
+                userStats.revisoesSemana = (userStats.revisoesSemana || 0) + 1;
+            } else if (type === 'pomodoro') {
+                userStats.pomodorosCompletos = (userStats.pomodorosCompletos || 0) + 1;
+            }
+            await checkAndUnlockConquistas();
+            await setDoc(doc(db, "users", userId, "userData", "stats"), userStats, { merge: true });
+        }
+
+        async function checkAndUnlockConquistas() {
+            if (!userStats.conquistas) userStats.conquistas = {};
+            for (const key in conquistasDef) {
+                if (!userStats.conquistas[key] && conquistasDef[key].req(userStats)) {
+                    userStats.conquistas[key] = true;
+                    showConquistaUnlocked(conquistasDef[key]);
+                }
+            }
+        }
+        
+        function showConquistaUnlocked(conquista) {
+            document.getElementById('conquista-icon').textContent = conquista.icon;
+            document.getElementById('conquista-nome').textContent = conquista.nome;
+            document.getElementById('conquista-desc').textContent = conquista.desc;
+            toggleModal('conquista-unlocked-modal', true);
+        }
+        
+        // --- Lógica do Pomodoro ---
+        let pomodoroInterval, pomodoroTime = 25 * 60, pomodoroMode = 'foco', isRunning = false;
+        const pomodoroTimer = document.getElementById('pomodoro-timer');
+        const pomodoroDisplay = () => document.getElementById('pomodoro-display');
+        const pomodoroStartPause = () => document.getElementById('pomodoro-start-pause');
+        const pomodoroReset = () => document.getElementById('pomodoro-reset');
+        const pomodoroStatus = () => document.getElementById('pomodoro-status');
+        
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomodoroTime / 60);
+            const seconds = pomodoroTime % 60;
+            pomodoroDisplay().textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        function startPausePomodoro() {
+            isRunning = !isRunning;
+            if (isRunning) {
+                pomodoroStartPause().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`; // Pause Icon
+                pomodoroInterval = setInterval(() => {
+                    pomodoroTime--;
+                    updatePomodoroDisplay();
+                    if (pomodoroTime <= 0) {
+                        clearInterval(pomodoroInterval);
+                        if (pomodoroMode === 'foco') {
+                            pomodoroMode = 'pausa';
+                            pomodoroTime = 5 * 60;
+                            pomodoroStatus().textContent = "Pausa Rápida!";
+                            pomodoroStatus().classList.replace('text-green-600', 'text-blue-600');
+                            addPoints('pomodoro');
+                        } else {
+                            pomodoroMode = 'foco';
+                            pomodoroTime = 25 * 60;
+                            pomodoroStatus().textContent = "Hora de Focar!";
+                            pomodoroStatus().classList.replace('text-blue-600', 'text-green-600');
+                        }
+                        isRunning = false;
+                        startPausePomodoro();
+                    }
+                }, 1000);
+            } else {
+                pomodoroStartPause().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`; // Play Icon
+                clearInterval(pomodoroInterval);
+            }
+        }
+        function resetPomodoro() {
+            clearInterval(pomodoroInterval);
+            isRunning = false;
+            pomodoroMode = 'foco';
+            pomodoroTime = 25 * 60;
+            pomodoroStatus().textContent = "Hora de Focar!";
+            pomodoroStatus().classList.replace('text-blue-600', 'text-green-600');
+            updatePomodoroDisplay();
+            pomodoroStartPause().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+            pomodoroReset().innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>`; // Stop Icon
+        }
+        
+        function addTopicInput(value = '', focus = true) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'flex items-center space-x-2';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'w-full border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 topic-input';
+            input.placeholder = 'Digite um tópico e pressione Enter';
+            input.value = value;
+            wrapper.innerHTML = `<span class="text-green-500 font-bold">&bull;</span>`;
+            wrapper.appendChild(input);
+            document.getElementById('conteudo-topicos-container').appendChild(wrapper);
+            if (focus) input.focus();
+        }
+
+        // --- Event Listeners ---
+        function openProfileModal() {
+            const currentName = userProfile.displayName || auth.currentUser.displayName || auth.currentUser.email || "";
+            const currentPhoto = userProfile.photoURL || auth.currentUser.photoURL || "";
+            document.getElementById('profile-name').value = currentName;
+            document.getElementById('profile-photo').value = currentPhoto;
+            toggleModal('profile-modal', true);
+        }
+
+        function attachAllEventListeners() {
+            document.getElementById('google-login-btn').addEventListener('click', handleGoogleLogin);
+            document.getElementById('admin-login-link').addEventListener('click', () => toggleModal('admin-senha-modal', true));
+
+            document.getElementById('admin-senha-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const pass = document.getElementById('admin-senha-input').value;
+                if (pass === ADMIN_SENHA) {
+                    toggleModal('admin-senha-modal', false);
+                    enterAdminMode();
+                } else {
+                    document.getElementById('admin-senha-error').textContent = 'Senha incorreta.';
+                }
+            });
+
+            Object.keys(allTabs).forEach(tabId => allTabs[tabId].addEventListener('click', () => switchTab(tabId)));
+            
+            document.getElementById('open-tarefa-modal').addEventListener('click', () => {
+                document.getElementById('tarefa-form').reset();
+                document.getElementById('tarefa-id').value = '';
+                document.getElementById('tarefa-modal-title').textContent = 'Nova Tarefa de Casa';
+                document.getElementById('tarefa-entrega').value = getLocalDate();
+                toggleModal('tarefa-modal', true);
+            });
+            document.getElementById('open-conteudo-modal').addEventListener('click', () => {
+                document.getElementById('conteudo-form').reset();
+                document.getElementById('conteudo-id').value = '';
+                document.getElementById('conteudo-modal-title').textContent = 'Novo Conteúdo de Aula';
+                document.getElementById('conteudo-data').value = getLocalDate();
+                document.getElementById('conteudo-topicos-container').innerHTML = '';
+                addTopicInput('', false);
+                toggleModal('conteudo-modal', true);
+            });
+            document.getElementById('edit-goals-btn').addEventListener('click', () => {
+                document.getElementById('meta-tarefas').value = userGoals.tarefas || 10;
+                document.getElementById('meta-revisoes').value = userGoals.revisoes || 10;
+                toggleModal('metas-modal', true);
+            });
+            
+            document.body.addEventListener('click', e => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const targetId = btn.id;
+
+                if (targetId === 'close-conquista-modal') {
+                    toggleModal('conquista-unlocked-modal', false);
+                    return;
+                }
+
+                if (targetId && (targetId.startsWith('close-') || targetId.startsWith('cancel-'))) {
+                    const modalId = targetId.split('-')[1] + '-modal';
+                    toggleModal(modalId, false);
+                }
+            });
+
+            document.getElementById('tarefa-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                if (!userId) return;
+                const id = document.getElementById('tarefa-id').value;
+                const data = {
+                    disciplina: document.getElementById('tarefa-disciplina').value,
+                    descricao: document.getElementById('tarefa-descricao').value,
+                    dataEntrega: document.getElementById('tarefa-entrega').value,
+                    fontes: document.getElementById('tarefa-fontes').value,
+                };
+                try {
+                    const docRef = id ? doc(db, "users", userId, "tarefas", id) : collection(db, "users", userId, "tarefas");
+                    if (id) await updateDoc(docRef, data);
+                    else await addDoc(docRef, { ...data, concluida: false, criadoEm: new Date() });
+                } catch (error) { console.error("Erro ao salvar tarefa:", error); }
+                toggleModal('tarefa-modal', false);
+            });
+            document.getElementById('conteudo-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                if (!userId) return;
+                const id = document.getElementById('conteudo-id').value;
+                const data = {
+                    disciplina: document.getElementById('conteudo-disciplina').value,
+                    descricao: document.getElementById('conteudo-descricao').value,
+                    dataAula: Timestamp.fromDate(new Date(document.getElementById('conteudo-data').value + 'T03:00:00Z')),
+                    topicos: Array.from(document.querySelectorAll('.topic-input')).map(i => i.value.trim()).filter(Boolean),
+                };
+                try {
+                    const docRef = id ? doc(db, "users", userId, "conteudos", id) : collection(db, "users", userId, "conteudos");
+                    if(id) await updateDoc(docRef, data);
+                    else await addDoc(docRef, { ...data, ultimaRevisao: data.dataAula, estagioRevisao: 0 });
+                } catch(error){ console.error("Erro ao salvar conteudo:", error); }
+                toggleModal('conteudo-modal', false);
+            });
+            document.getElementById('senha-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                const senha = document.getElementById('senha-input').value;
+                if (senha === SENHA_MESTRA) {
+                    toggleModal('senha-modal', false);
+                    if (pendingAction === 'deleteConteudo') await deleteDoc(doc(db, "users", userId, "conteudos", pendingDocId));
+                    else if (pendingAction === 'editConteudo') {
+                        const docSnap = await getDoc(doc(db, "users", userId, "conteudos", pendingDocId));
+                        if(docSnap.exists()){
+                            const c = docSnap.data();
+                            document.getElementById('conteudo-id').value = pendingDocId;
+                            document.getElementById('conteudo-modal-title').textContent = 'Editar Conteúdo';
+                            document.getElementById('conteudo-disciplina').value = c.disciplina;
+                            document.getElementById('conteudo-descricao').value = c.descricao;
+                            document.getElementById('conteudo-data').value = new Date(c.dataAula.seconds * 1000).toISOString().split('T')[0];
+                            document.getElementById('conteudo-topicos-container').innerHTML = '';
+                            c.topicos?.forEach(t => addTopicInput(t, false));
+                            addTopicInput('', false);
+                            toggleModal('conteudo-modal', true);
+                        }
+                    }
+                } else document.getElementById('senha-error').textContent = 'Senha incorreta.';
+            });
+            document.getElementById('metas-form').addEventListener('submit', async e => {
+                e.preventDefault();
+                userGoals.tarefas = parseInt(document.getElementById('meta-tarefas').value) || 0;
+                userGoals.revisoes = parseInt(document.getElementById('meta-revisoes').value) || 0;
+                await setDoc(doc(db, "users", userId, "userData", "goals"), userGoals);
+                toggleModal('metas-modal', false);
+            });
+
+            tarefasList.addEventListener('click', async e => {
+                const btn = e.target.closest('button');
+                if(!btn) return;
+                const id = btn.dataset.id;
+                const docRef = doc(db, "users", userId, "tarefas", id);
+                if(btn.classList.contains('concluir-btn')){
+                    await updateDoc(docRef, { concluida: true });
+                    await addPoints('tarefa');
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                } else if(btn.classList.contains('deletar-tarefa-btn')){
+                     await deleteDoc(docRef);
+                } else if(btn.classList.contains('editar-tarefa-btn')){
+                    const docSnap = await getDoc(docRef);
+                    if(docSnap.exists()){
+                        const t = docSnap.data();
+                        document.getElementById('tarefa-id').value = id;
+                        document.getElementById('tarefa-modal-title').textContent = 'Editar Tarefa';
+                        document.getElementById('tarefa-disciplina').value = t.disciplina;
+                        document.getElementById('tarefa-descricao').value = t.descricao;
+                        document.getElementById('tarefa-entrega').value = t.dataEntrega;
+                        document.getElementById('tarefa-fontes').value = t.fontes;
+                        toggleModal('tarefa-modal', true);
+                    }
+                }
+            });
+            conteudosList.addEventListener('click', async e => {
+                const btn = e.target.closest('button');
+                if(!btn) return;
+                const id = btn.dataset.id;
+                const docRef = doc(db, "users", userId, "conteudos", id);
+                const handleProtected = (action, docId) => {
+                    pendingAction = action; pendingDocId = docId;
+                    document.getElementById('senha-form').reset();
+                    document.getElementById('senha-error').textContent = '';
+                    toggleModal('senha-modal', true);
+                };
+                if(btn.classList.contains('revisar-btn')){
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        const novoEstagio = data.estagioRevisao < REVISAO_INTERVALOS.length - 1 ? data.estagioRevisao + 1 : data.estagioRevisao;
+                        await updateDoc(docRef, { ultimaRevisao: new Date(), estagioRevisao: novoEstagio });
+                        await addPoints('revisao');
+                    }
+                } else if(btn.classList.contains('deletar-conteudo-btn')) handleProtected('deleteConteudo', id);
+                else if(btn.classList.contains('editar-conteudo-btn')) handleProtected('editConteudo', id);
+            });
+            document.getElementById('conteudo-topicos-container').addEventListener('keydown', e => {
+                 if (e.key === 'Enter') { e.preventDefault(); addTopicInput(); }
+                 if (e.key === 'Backspace' && e.target.value === '' && document.querySelectorAll('.topic-input').length > 1) {
+                     e.preventDefault(); e.target.parentElement.remove();
+                 }
+            });
+
+            [filtroTarefaDisciplina, filtroTarefaData].forEach(el => el.addEventListener('change', applyAndRenderTarefasFilters));
+            filtroTarefaPesquisa.addEventListener('input', applyAndRenderTarefasFilters);
+            [filtroDisciplina, filtroStatus].forEach(el => el.addEventListener('change', applyAndRenderConteudosFilters));
+            filtroPesquisa.addEventListener('input', applyAndRenderConteudosFilters);
+            
+            document.getElementById('save-horario-btn').addEventListener('click', async () => {
+                const newHorarioData = {};
+                document.querySelectorAll('#horario-table select').forEach(s => {
+                    const { dia, horario } = s.dataset;
+                    if (!newHorarioData[dia]) newHorarioData[dia] = {};
+                    newHorarioData[dia][horario] = s.value;
+                });
+                await setDoc(doc(db, "users", userId, "userData", "horario"), newHorarioData);
+            });
+            
+            document.getElementById('profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newName = document.getElementById('profile-name').value;
+                let newPhoto = document.getElementById('profile-photo').value.trim();
+
+                if (!userId) return;
+
+                // Transforma link do Google Drive em link direto
+                if (newPhoto.includes('drive.google.com/file/d/')) {
+                    const parts = newPhoto.split('/d/');
+                    if (parts.length > 1) {
+                        const id = parts[1].split('/')[0];
+                        newPhoto = `https://lh3.googleusercontent.com/d/${id}`;
+                    }
+                }
+
+                try {
+                    await setDoc(doc(db, "users", userId, "userData", "profile"), {
+                        displayName: newName,
+                        photoURL: newPhoto
+                    }, { merge: true });
+                    toggleModal('profile-modal', false);
+                } catch (error) {
+                    console.error("Erro ao salvar perfil:", error);
+                }
+            });
+
+            document.getElementById('pomodoro-toggle-btn').addEventListener('click', () => pomodoroTimer.classList.add('expanded'));
+            document.getElementById('pomodoro-minimize-btn').addEventListener('click', () => pomodoroTimer.classList.remove('expanded'));
+            pomodoroStartPause().addEventListener('click', startPausePomodoro);
+            pomodoroReset().addEventListener('click', resetPomodoro);
+        }
+
+        // --- Lógica de Autenticação ---
+        async function handleGoogleLogin() {
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+            } catch (error) {
+                console.error("Erro no login com Google:", error);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await signOut(auth);
+            } catch (error) {
+                console.error("Erro ao fazer logout:", error);
+            }
+        }
+        
+        // --- Interação com Firestore ---
+        function setupFirestoreListeners(targetUserId = null) {
+            const currentId = targetUserId || userId;
+            if (!currentId) {
+                unsubscribes.forEach(unsub => unsub());
+                unsubscribes = [];
+                return;
+            };
+
+            unsubscribes.forEach(unsub => unsub());
+            unsubscribes = [];
+
+            const collections = {
+                tarefas: (data) => { allTarefas = data; applyAndRenderTarefasFilters(); },
+                conteudos: (data) => { allConteudos = data; applyAndRenderConteudosFilters(); },
+            };
+            for(const key in collections){
+                const ref = collection(db, "users", currentId, key);
+                const unsub = onSnapshot(query(ref), (snapshot) => {
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    collections[key](data);
+                });
+                unsubscribes.push(unsub);
+            }
+            
+            const defaultDocs = {
+                'stats': { pontos: 0, pontosMes: 0, ultimoMes: "", tarefasConcluidas: 0, revisoesFeitas: 0, pomodorosCompletos: 0, tarefasHoje: 0, tarefasSemana: 0, revisoesSemana: 0, conquistas: {} },
+                'goals': { tarefas: 10, revisoes: 10 },
+                'horario': {},
+                'profile': {}
+            };
+            for (const docId in defaultDocs) {
+                const docRef = doc(db, "users", currentId, "userData", docId);
+                const unsub = onSnapshot(docRef, async (docSnap) => {
+                    let data;
+                    if (!docSnap.exists()) {
+                        // Apenas cria o doc se for o próprio usuário, não o admin
+                        if (!targetUserId) {
+                            await setDoc(docRef, defaultDocs[docId]);
+                        }
+                        data = defaultDocs[docId];
+                    } else {
+                        data = docSnap.data();
+                    }
+                    
+                    if (docId === 'stats') userStats = data;
+                    if (docId === 'goals') userGoals = data;
+                    if (docId === 'horario') horarioData = data;
+                    if (docId === 'profile') userProfile = data;
+                    
+                    renderAll();
+                });
+                unsubscribes.push(unsub);
+            }
+        }
+        
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Usuário está logado
+                userId = user.uid;
+                loginContainer.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                setupFirestoreListeners();
+            } else {
+                // Usuário está deslogado
+                userId = null;
+                viewedUserId = null;
+                loginContainer.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+                document.getElementById('admin-view-banner').classList.add('hidden');
+                if (unsubscribes.length > 0) {
+                     unsubscribes.forEach(unsub => unsub());
+                     unsubscribes = [];
+                }
+            }
         });
-      }
-      if(conc.length){tarefasList.innerHTML+=`<h3 class="text-xl font-semibold text-slate-700 mb-2 mt-8 opacity-70">Concluídas</h3>`;
-        conc.forEach(t=>{
-          tarefasList.innerHTML+=`
-            <div class="bg-white rounded-xl shadow-md p-5 border-l-4 border-slate-400 opacity-60">
-              <div class="flex items-center justify-between">
-                <div class="flex-1"><span class="text-sm text-slate-500">${t.disciplina}</span><h4 class="text-lg font-bold text-slate-600 line-through">${t.descricao}</h4></div>
-                <button data-id="${t.id}" class="deletar-tarefa-btn text-slate-400 hover:text-red-500 p-2 rounded-full">🗑️</button>
-              </div>
-            </div>`;
-        });
-      }
-    }
 
-    function applyAndRenderConteudosFilters(){
-      const d=filtroDisciplina.value, s=filtroStatus.value, q=filtroPesquisa.value.toLowerCase();
-      let list=allConteudos; if(d) list=list.filter(c=>c.disciplina===d);
-      if(s) list=list.filter(c=>getStatusRevisao(c).status===s);
-      if(q) list=list.filter(c=>c.descricao.toLowerCase().includes(q)||(c.topicos&&c.topicos.some(t=>t.toLowerCase().includes(q))));
-      renderConteudos(list);
-    }
-    function renderConteudos(conteudos){
-      conteudosList.innerHTML=''; if(!conteudos.length){conteudosList.innerHTML=`<div class="text-center p-8 bg-white rounded-lg shadow"><p class="text-slate-500">Nenhum conteúdo encontrado.</p></div>`;return;}
-      conteudos.sort((a,b)=>getStatusRevisao(a).proxima-getStatusRevisao(b).proxima).forEach(c=>{
-        const info=getStatusRevisao(c); const data=new Date(c.dataAula.seconds*1000).toLocaleDateString('pt-BR');
-        let topicosHtml=''; if(c.topicos && Array.isArray(c.topicos) && c.topicos.length>0){
-          topicosHtml=`<div class="text-sm text-slate-600 mt-2"><b>Tópicos:</b><ul class="list-disc list-inside ml-2">${c.topicos.map(t=>`<li>${t}</li>`).join('')}</ul></div>`;
-        }
-        conteudosList.innerHTML+=`
-          <div class="bg-white rounded-xl shadow-lg p-5 border-l-4 border-${info.color}-500">
-            <div class="flex flex-col sm:flex-row justify-between">
-              <div class="flex-1 mb-4 sm:mb-0">
-                <div class="flex items-center mb-2 flex-wrap">
-                  <span class="bg-${info.color}-100 text-${info.color}-800 text-xs font-semibold mr-3 px-2.5 py-0.5 rounded-full">${c.disciplina}</span>
-                  <span class="text-sm font-medium text-slate-600">Aula de: ${data}</span>
-                </div>
-                <h4 class="text-lg font-bold text-slate-800">${c.descricao}</h4>
-                ${topicosHtml}
-              </div>
-              <div class="flex flex-col items-end justify-center text-right space-y-2">
-                <div class="flex items-center space-x-2">
-                  <button data-id="${c.id}" class="editar-conteudo-btn bg-yellow-500 text-white p-2 rounded-full hover:bg-yellow-600 shadow">✏️</button>
-                  <button data-id="${c.id}" class="deletar-conteudo-btn bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow">🗑️</button>
-                </div>
-                <span class="font-bold text-lg text-${info.color}-800">${info.text}</span>
-                <button data-id="${c.id}" class="revisar-btn bg-${info.color}-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-${info.color}-600">Já revisei!</button>
-              </div>
-            </div>
-          </div>`;
-      });
-    }
-
-    function renderHorario(){
-      const table=document.getElementById('horario-table');
-      let html=`<thead><tr><th class="p-2 border">Horário</th>${DIAS_SEMANA.map(d=>`<th class="p-2 border">${d}</th>`).join('')}</tr></thead><tbody>`;
-      for(const h of HORARIOS_AULA){
-        html+=`<tr><td class="p-2 border font-bold">${h}</td>`;
-        for(const dia of DIAS_SEMANA){
-          const saved=horarioData[dia]?horarioData[dia][h]||'':'';
-          html+=`<td class="p-1 border"><select data-dia="${dia}" data-horario="${h}" class="w-full border-0 focus:ring-0 text-center bg-transparent"><option value="">-</option>${disciplinas.map(d=>`<option value="${d}" ${saved===d?'selected':''}>${d}</option>`).join('')}</select></td>`;
-        }
-        html+=`</tr>`;
-      }
-      html+=`</tbody>`; table.innerHTML=html;
-    }
-
-    async function addPoints(type){
-      if(!userId) return;
-      const now=new Date(); const currentMonthStr=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-      if(userStats.ultimoMes!==currentMonthStr){userStats.pontosMes=0;userStats.ultimoMes=currentMonthStr;}
-      const todayStr=getLocalDate().slice(0,10); if(userStats.lastDay!==todayStr){userStats.tarefasHoje=0;userStats.lastDay=todayStr;}
-      const day=now.getDay(); const first=new Date(now); first.setDate(now.getDate()-(day===0?6:day-1)); first.setHours(0,0,0,0);
-      if(!userStats.lastWeek || new Date(userStats.lastWeek)<first){userStats.tarefasSemana=0;userStats.revisoesSemana=0;userStats.lastWeek=first.toISOString().slice(0,10);}
-      if(type==='tarefa'){userStats.pontos=(userStats.pontos||0)+10;userStats.pontosMes=(userStats.pontosMes||0)+10;userStats.tarefasConcluidas=(userStats.tarefasConcluidas||0)+1;userStats.tarefasHoje=(userStats.tarefasHoje||0)+1;userStats.tarefasSemana=(userStats.tarefasSemana||0)+1;}
-      else if(type==='revisao'){userStats.pontos=(userStats.pontos||0)+5;userStats.pontosMes=(userStats.pontosMes||0)+5;userStats.revisoesFeitas=(userStats.revisoesFeitas||0)+1;userStats.revisoesSemana=(userStats.revisoesSemana||0)+1;}
-      else if(type==='pomodoro'){userStats.pomodorosCompletos=(userStats.pomodorosCompletos||0)+1;}
-      await checkAndUnlockConquistas(); await setDoc(doc(db,"users",userId,"userData","stats"),userStats,{merge:true});
-    }
-    async function checkAndUnlockConquistas(){
-      if(!userStats.conquistas) userStats.conquistas={};
-      const defs={
-        PRIMEIRA_TAREFA:s=>s.tarefasConcluidas>=1,
-        PRIMEIRA_REVISAO:s=>s.revisoesFeitas>=1,
-        DEZ_TAREFAS:s=>s.tarefasConcluidas>=10,
-        DEZ_REVISOES:s=>s.revisoesFeitas>=10,
-        MARATONISTA:s=>s.tarefasHoje>=5,
-        FOCO_TOTAL:s=>s.pomodorosCompletos>=1,
-      };
-      for(const k in defs){ if(!userStats.conquistas[k] && defs[k](userStats)){ userStats.conquistas[k]=true; showConquistaUnlocked({icon:'🏅',nome:k,desc:'Parabéns!'}); } }
-    }
-    function showConquistaUnlocked(c){
-      document.getElementById('conquista-icon').textContent=c.icon;
-      document.getElementById('conquista-nome').textContent=c.nome;
-      document.getElementById('conquista-desc').textContent=c.desc;
-      toggleModal('conquista-unlocked-modal',true);
-    }
-
-    let pomodoroInterval, pomodoroTime=25*60, pomodoroMode='foco', isRunning=false;
-    const pomodoroTimer=document.getElementById('pomodoro-timer');
-    const pomodoroDisplay=()=>document.getElementById('pomodoro-display');
-    const pomodoroStartPause=()=>document.getElementById('pomodoro-start-pause');
-    const pomodoroReset=()=>document.getElementById('pomodoro-reset');
-    const pomodoroStatus=()=>document.getElementById('pomodoro-status');
-    function updatePomodoroDisplay(){const m=Math.floor(pomodoroTime/60),s=pomodoroTime%60;pomodoroDisplay().textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
-    function startPausePomodoro(){
-      isRunning=!isRunning;
-      if(isRunning){
-        pomodoroStartPause().innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
-        pomodoroInterval=setInterval(()=>{pomodoroTime--;updatePomodoroDisplay();if(pomodoroTime<=0){clearInterval(pomodoroInterval);if(pomodoroMode==='foco'){pomodoroMode='pausa';pomodoroTime=5*60;pomodoroStatus().textContent="Pausa Rápida!";pomodoroStatus().classList.replace('text-green-600','text-blue-600');addPoints('pomodoro');}else{pomodoroMode='foco';pomodoroTime=25*60;pomodoroStatus().textContent="Hora de Focar!";pomodoroStatus().classList.replace('text-blue-600','text-green-600');}isRunning=false;startPausePomodoro();}},1000);
-      } else { pomodoroStartPause().innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`; clearInterval(pomodoroInterval); }
-    }
-    function resetPomodoro(){clearInterval(pomodoroInterval);isRunning=false;pomodoroMode='foco';pomodoroTime=25*60;pomodoroStatus().textContent="Hora de Focar!";pomodoroStatus().classList.replace('text-blue-600','text-green-600');updatePomodoroDisplay();pomodoroStartPause().innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;pomodoroReset().innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"><path d="M6 6h12v12H6z"/></svg>`;}
-
-    function addTopicInput(value='',focus=true){
-      const wrapper=document.createElement('div');wrapper.className='flex items-center space-x-2';
-      const input=document.createElement('input');input.type='text';input.className='w-full border-slate-300 rounded-lg shadow-sm focus:ring-green-500 focus:border-green-500 topic-input';input.placeholder='Digite um tópico e pressione Enter';input.value=value;
-      wrapper.innerHTML=`<span class="text-green-500 font-bold">&bull;</span>`;wrapper.appendChild(input);
-      document.getElementById('conteudo-topicos-container').appendChild(wrapper); if(focus) input.focus();
-    }
-
-    function openProfileModal(){
-      const name=userProfile.displayName||auth.currentUser.displayName||auth.currentUser.email||"";
-      const photo=userProfile.photoURL||auth.currentUser.photoURL||"";
-      document.getElementById('profile-name').value=name; document.getElementById('profile-photo').value=photo; toggleModal('profile-modal',true);
-    }
-
-    function attachAllEventListeners(){
-      document.getElementById('google-login-btn').addEventListener('click', handleGoogleLogin);
-      Object.keys(allTabs).forEach(id=>allTabs[id].addEventListener('click',()=>switchTab(id)));
-
-      document.getElementById('open-tarefa-modal').addEventListener('click',()=>{
-        document.getElementById('tarefa-form').reset();document.getElementById('tarefa-id').value='';document.getElementById('tarefa-modal-title').textContent='Nova Tarefa de Casa';document.getElementById('tarefa-entrega').value=getLocalDate();toggleModal('tarefa-modal',true);
-      });
-      document.getElementById('open-conteudo-modal').addEventListener('click',()=>{
-        document.getElementById('conteudo-form').reset();document.getElementById('conteudo-id').value='';document.getElementById('conteudo-modal-title').textContent='Novo Conteúdo de Aula';document.getElementById('conteudo-data').value=getLocalDate();document.getElementById('conteudo-topicos-container').innerHTML='';addTopicInput('',false);toggleModal('conteudo-modal',true);
-      });
-      document.getElementById('edit-goals-btn').addEventListener('click',()=>{
-        document.getElementById('meta-tarefas').value=userGoals.tarefas||10;document.getElementById('meta-revisoes').value=userGoals.revisoes||10;toggleModal('metas-modal',true);
-      });
-
-      document.body.addEventListener('click',e=>{
-        const btn=e.target.closest('button'); if(!btn) return; const id=btn.id;
-        if(id==='close-conquista-modal'){toggleModal('conquista-unlocked-modal',false);return;}
-        if(id && (id.startsWith('close-')||id.startsWith('cancel-'))){const modalId=id.split('-')[1]+'-modal';toggleModal(modalId,false);}
-      });
-
-      document.getElementById('tarefa-form').addEventListener('submit',async e=>{
-        e.preventDefault(); if(!userId) return;
-        const id=document.getElementById('tarefa-id').value;
-        const data={disciplina:document.getElementById('tarefa-disciplina').value,descricao:document.getElementById('tarefa-descricao').value,dataEntrega:document.getElementById('tarefa-entrega').value,fontes:document.getElementById('tarefa-fontes').value};
-        try{ const ref=id?doc(db,"users",userId,"tarefas",id):collection(db,"users",userId,"tarefas"); if(id) await updateDoc(ref,data); else await addDoc(ref,{...data,concluida:false,criadoEm:new Date()}); }catch(err){ console.error("Erro ao salvar tarefa:",err); }
-        toggleModal('tarefa-modal',false);
-      });
-
-      document.getElementById('conteudo-form').addEventListener('submit',async e=>{
-        e.preventDefault(); if(!userId) return;
-        const id=document.getElementById('conteudo-id').value;
-        const data={disciplina:document.getElementById('conteudo-disciplina').value,descricao:document.getElementById('conteudo-descricao').value,dataAula:Timestamp.fromDate(new Date(document.getElementById('conteudo-data').value+'T03:00:00Z')),topicos:Array.from(document.querySelectorAll('.topic-input')).map(i=>i.value.trim()).filter(Boolean)};
-        try{ const ref=id?doc(db,"users",userId,"conteudos",id):collection(db,"users",userId,"conteudos"); if(id) await updateDoc(ref,data); else await addDoc(ref,{...data,ultimaRevisao:data.dataAula,estagioRevisao:0}); }catch(err){ console.error("Erro ao salvar conteudo:",err); }
-        toggleModal('conteudo-modal',false);
-      });
-
-      document.getElementById('senha-form').addEventListener('submit',async e=>{
-        e.preventDefault(); const senha=document.getElementById('senha-input').value;
-        if(senha===SENHA_MESTRA){toggleModal('senha-modal',false);
-          if(pendingAction==='deleteConteudo') await deleteDoc(doc(db,"users",userId,"conteudos",pendingDocId));
-          else if(pendingAction==='editConteudo'){const snap=await getDoc(doc(db,"users",userId,"conteudos",pendingDocId)); if(snap.exists()){const c=snap.data(); document.getElementById('conteudo-id').value=pendingDocId; document.getElementById('conteudo-modal-title').textContent='Editar Conteúdo'; document.getElementById('conteudo-disciplina').value=c.disciplina; document.getElementById('conteudo-descricao').value=c.descricao; document.getElementById('conteudo-data').value=new Date(c.dataAula.seconds*1000).toISOString().split('T')[0]; document.getElementById('conteudo-topicos-container').innerHTML=''; c.topicos?.forEach(t=>addTopicInput(t,false)); addTopicInput('',false); toggleModal('conteudo-modal',true);}}
-        } else document.getElementById('senha-error').textContent='Senha incorreta.';
-      });
-
-      document.getElementById('metas-form').addEventListener('submit',async e=>{
-        e.preventDefault(); userGoals.tarefas=parseInt(document.getElementById('meta-tarefas').value)||0; userGoals.revisoes=parseInt(document.getElementById('meta-revisoes').value)||0; await setDoc(doc(db,"users",userId,"userData","goals"),userGoals); toggleModal('metas-modal',false);
-      });
-
-      tarefasList.addEventListener('click',async e=>{
-        const btn=e.target.closest('button'); if(!btn) return; const id=btn.dataset.id; const ref=doc(db,"users",userId,"tarefas",id);
-        if(btn.classList.contains('concluir-btn')){await updateDoc(ref,{concluida:true}); await addPoints('tarefa'); confetti({particleCount:100,spread:70,origin:{y:0.6}});}
-        else if(btn.classList.contains('deletar-tarefa-btn')) await deleteDoc(ref);
-        else if(btn.classList.contains('editar-tarefa-btn')){const snap=await getDoc(ref); if(snap.exists()){const t=snap.data(); document.getElementById('tarefa-id').value=id; document.getElementById('tarefa-modal-title').textContent='Editar Tarefa'; document.getElementById('tarefa-disciplina').value=t.disciplina; document.getElementById('tarefa-descricao').value=t.descricao; document.getElementById('tarefa-entrega').value=t.dataEntrega; document.getElementById('tarefa-fontes').value=t.fontes; toggleModal('tarefa-modal',true);}}
-      });
-
-      conteudosList.addEventListener('click',async e=>{
-        const btn=e.target.closest('button'); if(!btn) return; const id=btn.dataset.id; const ref=doc(db,"users",userId,"conteudos",id);
-        const protectedAction=(act,docId)=>{pendingAction=act;pendingDocId=docId;document.getElementById('senha-form').reset();document.getElementById('senha-error').textContent='';toggleModal('senha-modal',true);};
-        if(btn.classList.contains('revisar-btn')){const snap=await getDoc(ref); if(snap.exists()){const d=snap.data(); const novo=d.estagioRevisao<REVISAO_INTERVALOS.length-1?d.estagioRevisao+1:d.estagioRevisao; await updateDoc(ref,{ultimaRevisao:new Date(),estagioRevisao:novo}); await addPoints('revisao');}}
-        else if(btn.classList.contains('deletar-conteudo-btn')) protectedAction('deleteConteudo',id);
-        else if(btn.classList.contains('editar-conteudo-btn')) protectedAction('editConteudo',id);
-      });
-
-      document.getElementById('conteudo-topicos-container').addEventListener('keydown',e=>{
-        if(e.key==='Enter'){e.preventDefault();addTopicInput();}
-        if(e.key==='Backspace' && e.target.value==='' && document.querySelectorAll('.topic-input').length>1){e.preventDefault();e.target.parentElement.remove();}
-      });
-
-      [filtroTarefaDisciplina, filtroTarefaData].forEach(el=>el.addEventListener('change',applyAndRenderTarefasFilters));
-      filtroTarefaPesquisa.addEventListener('input',applyAndRenderTarefasFilters);
-      [filtroDisciplina, filtroStatus].forEach(el=>el.addEventListener('change',applyAndRenderConteudosFilters));
-      filtroPesquisa.addEventListener('input',applyAndRenderConteudosFilters);
-
-      document.getElementById('save-horario-btn').addEventListener('click',async ()=>{
-        const newHorario={}; document.querySelectorAll('#horario-table select').forEach(s=>{const {dia,horario}=s.dataset; if(!newHorario[dia]) newHorario[dia]={}; newHorario[dia][horario]=s.value;});
-        await setDoc(doc(db,"users",userId,"userData","horario"),newHorario);
-      });
-
-      document.getElementById('profile-form').addEventListener('submit',async e=>{
-        e.preventDefault(); const name=document.getElementById('profile-name').value; let photo=document.getElementById('profile-photo').value.trim(); if(!userId) return;
-        if(photo.includes('drive.google.com/file/d/')){const parts=photo.split('/d/'); if(parts.length>1){const id=parts[1].split('/')[0]; photo=`https://lh3.googleusercontent.com/d/${id}`;}}
-        try{await setDoc(doc(db,"users",userId,"userData","profile"),{displayName:name,photoURL:photo},{merge:true}); toggleModal('profile-modal',false);}catch(err){console.error("Erro ao salvar perfil:",err);}
-      });
-
-      document.getElementById('pomodoro-toggle-btn').addEventListener('click',()=>pomodoroTimer.classList.add('expanded'));
-      document.getElementById('pomodoro-minimize-btn').addEventListener('click',()=>pomodoroTimer.classList.remove('expanded'));
-      pomodoroStartPause().addEventListener('click',startPausePomodoro);
-      pomodoroReset().addEventListener('click',resetPomodoro);
-    }
-
-    // --- Auth ---
-    async function handleGoogleLogin(){
-      const provider=new GoogleAuthProvider();
-      try{
-        await signInWithPopup(auth, provider);
-      }catch(error){
-        if(error?.code==='auth/popup-blocked' || error?.code==='auth/operation-not-supported-in-this-environment'){
-          try{ await signInWithRedirect(auth, provider); return; }
-          catch(e){ showLoginError(e); }
-        } else {
-          showLoginError(error);
-        }
-      }
-    }
-    async function handleLogout(){ try{ await auth.signOut(); }catch(e){ console.error("Erro ao fazer logout:",e); } }
-
-    function setupFirestoreListeners(){
-      if(!userId){unsubscribes.forEach(u=>u());unsubscribes=[];return;}
-      const collections={tarefas:data=>{allTarefas=data;applyAndRenderTarefasFilters();},conteudos:data=>{allConteudos=data;applyAndRenderConteudosFilters();}};
-      for(const key in collections){
-        const ref=collection(db,"users",userId,key);
-        const unsub=onSnapshot(query(ref),(snap)=>{const data=snap.docs.map(d=>({id:d.id,...d.data()}));collections[key](data);});
-        unsubscribes.push(unsub);
-      }
-      const defaults={
-        stats:{pontos:0,pontosMes:0,ultimoMes:"",tarefasConcluidas:0,revisoesFeitas:0,pomodorosCompletos:0,tarefasHoje:0,tarefasSemana:0,revisoesSemana:0,conquistas:{}},
-        goals:{tarefas:10,revisoes:10},horario:{},profile:{}
-      };
-      for(const id of Object.keys(defaults)){
-        const ref=doc(db,"users",userId,"userData",id);
-        const unsub=onSnapshot(ref,async (snap)=>{
-          let data; if(!snap.exists()){await setDoc(ref,defaults[id]); data=defaults[id];} else {data=snap.data();}
-          if(id==='stats') userStats=data;
-          if(id==='goals') userGoals=data;
-          if(id==='horario') horarioData=data;
-          if(id==='profile') userProfile=data;
-          renderAll();
-        }); unsubscribes.push(unsub);
-      }
-    }
-
-    onAuthStateChanged(auth,(user)=>{
-      if(user){
-        userId=user.uid; loginContainer.classList.add('hidden'); appContainer.classList.remove('hidden'); setupFirestoreListeners();
-      } else {
-        userId=null; loginContainer.classList.remove('hidden'); appContainer.classList.add('hidden');
-        if(unsubscribes.length){unsubscribes.forEach(u=>u());unsubscribes=[];}
-      }
-    });
-
-    // --- Inicialização ---
-    renderAllModals(); attachAllEventListeners(); populateSelects(); resetPomodoro(); switchTab('meu-dia');
-    // ------------- (FIM: BLOCO ORIGINAL SEM MUDANÇAS) -------------
-  </script>
+        // --- Inicialização da Aplicação ---
+        renderAllModals();
+        attachAllEventListeners(); 
+        populateSelects();
+        resetPomodoro();
+        switchTab('meu-dia');
+    </script>
 </body>
 </html>
+
